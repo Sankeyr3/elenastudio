@@ -1,0 +1,12 @@
+{
+  "//": "compilerOptions solo los usa Vercel al compilar /api; el editor y `npm run typecheck` usan las referencias.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "files": [],
+  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+}

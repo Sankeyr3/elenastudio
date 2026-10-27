@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: "Source Code Pro", "Courier New", Consolas, "Liberation Mono", Menlo, monospace;
+  --color-muted: #506882;
+  --color-line: rgb(0 0 0 / 0.3);
+  /* Color secundario: se usa con moderación (marca, hoy, acción principal, foco). */
+  --color-accent: #014bc4;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  @apply bg-white font-mono text-[15px] leading-snug text-black sm:text-[13px];
+}
+
+::selection {
+  @apply bg-accent text-white;
+}
