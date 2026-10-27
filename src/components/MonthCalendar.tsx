@@ -180,7 +180,7 @@ function MonthGrid({
       aria-label={monthName(year, monthNum - 1)}
     >
       {Array.from({ length: leading }, (_, i) => (
-        <div key={`lead-${i}`} className={`${cell} bg-black/[0.03]`} />
+        <div key={`lead-${i}`} className={`${cell} bg-ink/[0.03]`} />
       ))}
       {Array.from({ length: daysInMonth }, (_, i) => {
         const date = addDays(first, i)
@@ -199,12 +199,12 @@ function MonthGrid({
             disabled={!selectable}
             aria-pressed={isSelected}
             aria-label={`${i + 1}${dayExams.length ? `: ${dayExams.map((e) => e.subject.name).join(', ')}` : ''}`}
-            className={`${cell} flex flex-col gap-px p-px text-left ${isWeekend ? 'bg-black/[0.03]' : ''} ${
-              isSelected ? 'outline-2 -outline-offset-2 outline-accent' : selectable ? 'hover:bg-black/5' : ''
+            className={`${cell} flex flex-col gap-px p-px text-left ${isWeekend ? 'bg-ink/[0.03]' : ''} ${
+              isSelected ? 'outline-2 -outline-offset-2 outline-accent' : selectable ? 'hover:bg-ink/5' : ''
             }`}
           >
             <span className="flex items-start justify-between">
-              <span className={`px-0.5 text-[11px] leading-4 ${isToday ? 'bg-accent font-bold text-white' : isPast ? 'text-black/30' : ''}`}>
+              <span className={`px-0.5 text-[11px] leading-4 ${isToday ? 'bg-accent font-bold text-on-accent' : isPast ? 'text-ink/30' : ''}`}>
                 {i + 1}
               </span>
             </span>
@@ -222,7 +222,7 @@ function MonthGrid({
         )
       })}
       {Array.from({ length: trailing }, (_, i) => (
-        <div key={`trail-${i}`} className={`${cell} bg-black/[0.03]`} />
+        <div key={`trail-${i}`} className={`${cell} bg-ink/[0.03]`} />
       ))}
     </section>
   )

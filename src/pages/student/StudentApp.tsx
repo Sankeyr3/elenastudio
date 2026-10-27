@@ -22,37 +22,28 @@ export function StudentApp({ profile, tab, onTab }: { profile: Profile; tab: Stu
       {data.error && (
         <div className="mb-3">
           <Alert>
-            {data.error} <Button onClick={() => void data.reload()}>reintentar</Button>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>{data.error}</span>
+              <Button onClick={() => void data.reload()}>reintentar</Button>
+            </div>
           </Alert>
         </div>
       )}
 
       {tab === 'examenes' ? (
         <div>
-          <Heading
-            as="h1"
-            right={
-              data.subjects.length > 0 && (
-                <Button variant="primary" onClick={() => setExamForm({ exam: null })}>
-                  + examen
-                </Button>
-              )
-            }
-          >
-            próximos exámenes
-          </Heading>
-
           {data.subjects.length === 0 ? (
             <EmptyState title="empieza añadiendo tus asignaturas">
               <p>así luego podrás apuntar cada examen en unos segundos.</p>
-              <Button variant="primary" className="mt-1" onClick={() => onTab('asignaturas')}>
-                ir a asignaturas
-              </Button>
+              <div className="mt-1 flex justify-end">
+                <Button variant="primary" onClick={() => onTab('asignaturas')}>
+                  ir a asignaturas
+                </Button>
+              </div>
             </EmptyState>
           ) : (
             <ExamsBrowser
               upcoming={data.upcoming}
-              past={data.past}
               all={data.exams}
               today={data.today}
               onEdit={(exam) => setExamForm({ exam })}
@@ -85,7 +76,7 @@ export function StudentApp({ profile, tab, onTab }: { profile: Profile; tab: Stu
                   <li key={s.id}>
                     <button
                       onClick={() => setSubjectForm({ subject: s })}
-                      className="flex w-full items-center gap-2 border-b border-dashed border-line px-1 py-3 text-left hover:bg-black/5 sm:py-0.5"
+                      className="flex w-full items-center gap-2 border-b border-dashed border-line px-1 py-3 text-left hover:bg-ink/5 sm:py-0.5"
                     >
                       <SubjectDot subject={s} />
                       <span className="min-w-0 flex-1 truncate font-bold">{s.name}</span>

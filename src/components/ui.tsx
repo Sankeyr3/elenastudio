@@ -20,7 +20,7 @@ export const tapClass = 'inline-flex min-h-11 items-center justify-center px-2 s
 
 /** Estilo común de todo lo pulsable: texto plano que se invierte al pasar el ratón. */
 export const linkClass =
-  'cursor-pointer hover:bg-[#666] hover:text-white focus-visible:bg-accent focus-visible:text-white focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-inherit'
+  'cursor-pointer hover:bg-[#666] hover:text-white focus-visible:bg-accent focus-visible:text-on-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-inherit'
 
 /** Botón con forma de enlace entre corchetes: [guardar]. */
 export function Button({
@@ -60,7 +60,7 @@ export function Choice({
       aria-checked={active}
       aria-label={label}
       onClick={onClick}
-      className={`whitespace-nowrap ${tapClass} ${active ? 'bg-black text-white' : linkClass} ${className}`}
+      className={`whitespace-nowrap ${tapClass} ${active ? 'bg-ink text-paper' : linkClass} ${className}`}
     >
       [{children}]
     </button>
@@ -133,7 +133,7 @@ export function Field({
 
 // 16px en móvil para que iOS no haga zoom al enfocar.
 export const inputClass =
-  'block w-full rounded-none border border-line bg-white px-1.5 py-2.5 text-[16px] sm:py-1 placeholder:text-muted focus:border-accent focus:outline-none sm:text-[13px]'
+  'block w-full rounded-none border border-line bg-paper px-1.5 py-2.5 text-[16px] sm:py-1 placeholder:text-muted focus:border-accent focus:outline-none sm:text-[13px]'
 
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   useEffect(() => {
@@ -156,11 +156,11 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[92dvh] w-full overflow-y-auto border-t border-black bg-white pb-[env(safe-area-inset-bottom)] sm:max-h-[85dvh] sm:max-w-md sm:border"
+        className="max-h-[92dvh] w-full overflow-y-auto border-t border-ink bg-paper pb-[env(safe-area-inset-bottom)] sm:max-h-[85dvh] sm:max-w-md sm:border"
       >
-        <div className="sticky top-0 flex items-center justify-between bg-black pl-2 text-white sm:py-0.5">
+        <div className="sticky top-0 flex items-center justify-between bg-ink pl-2 text-paper sm:py-0.5">
           <h2 className="font-bold">{title}</h2>
-          <button onClick={onClose} className={`${tapClass} hover:bg-white hover:text-black`} aria-label="Cerrar">
+          <button onClick={onClose} className={`${tapClass} hover:bg-paper hover:text-ink`} aria-label="Cerrar">
             [x]
           </button>
         </div>
@@ -241,7 +241,7 @@ export function Tabs<T extends string>({
           role="tab"
           aria-selected={value === tab.id}
           onClick={() => onChange(tab.id)}
-          className={`whitespace-nowrap ${tapClass} ${value === tab.id ? 'bg-black text-white' : linkClass}`}
+          className={`whitespace-nowrap ${tapClass} ${value === tab.id ? 'bg-ink text-paper' : linkClass}`}
         >
           [{tab.label}]
         </button>

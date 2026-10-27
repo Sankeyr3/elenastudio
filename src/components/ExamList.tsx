@@ -46,7 +46,7 @@ export function ExamList({
                     {onEdit ? (
                       <button
                         onClick={() => onEdit(exam)}
-                        className="block w-full px-1 py-2 text-left sm:py-0.5 hover:bg-black/5 focus-visible:bg-black/10 focus-visible:outline-none"
+                        className="block w-full px-1 py-2 text-left sm:py-0.5 hover:bg-ink/5 focus-visible:bg-ink/10 focus-visible:outline-none"
                         aria-label={`Editar examen de ${exam.subject.name} del ${formatDate(exam.exam_date)}`}
                       >
                         {content}

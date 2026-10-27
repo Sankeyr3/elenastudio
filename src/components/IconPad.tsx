@@ -67,7 +67,7 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
   }
 
   const swatch = (active: boolean) =>
-    `h-9 w-9 shrink-0 border border-line sm:h-6 sm:w-6 ${active ? 'outline-2 outline-offset-2 outline-black' : 'hover:opacity-70'}`
+    `h-9 w-9 shrink-0 border border-line sm:h-6 sm:w-6 ${active ? 'outline-2 outline-offset-2 outline-ink' : 'hover:opacity-70'}`
 
   return (
     <div className="space-y-2">
@@ -120,7 +120,7 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
         <svg
           ref={svgRef}
           viewBox={`0 0 ${ICON_SIZE} ${ICON_SIZE}`}
-          className={`h-48 w-48 shrink-0 cursor-crosshair touch-none border border-line bg-white select-none sm:h-36 sm:w-36 ${colorClass}`}
+          className={`h-48 w-48 shrink-0 cursor-crosshair touch-none border border-line bg-paper select-none sm:h-36 sm:w-36 ${colorClass}`}
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}

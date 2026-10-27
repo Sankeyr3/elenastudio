@@ -5,6 +5,7 @@ import { friendlyError } from '../../lib/errors'
 import { supabase } from '../../lib/supabase'
 import type { ExamWithSubject, Subject } from '../../lib/types'
 import { MAX_NOTE_LENGTH, validateExam, type ExamErrors, type ExamInput } from '../../lib/validation'
+import { SubjectForm } from './SubjectForm'
 
 export function ExamForm({
   subjects,
@@ -35,6 +36,7 @@ export function ExamForm({
   const [serverError, setServerError] = useState<string | null>(null)
   const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [showNote, setShowNote] = useState(Boolean(exam?.note))
+  const [addingSubject, setAddingSubject] = useState(false)
 
   const set = (patch: Partial<ExamInput>) => setValues((v) => ({ ...v, ...patch }))
 
@@ -88,6 +90,22 @@ export function ExamForm({
     { label: '+2 sem', date: addDays(today, 14) },
   ]
 
+  // Se sustituye el modal (en vez de apilarlo) para que Escape no cierre ambos; el estado del examen se conserva.
+  if (addingSubject) {
+    return (
+      <SubjectForm
+        subject={null}
+        subjects={subjects}
+        examCount={0}
+        onClose={() => setAddingSubject(false)}
+        onSaved={async (id) => {
+          await onSaved()
+          if (id) set({ subject_id: id })
+        }}
+      />
+    )
+  }
+
   return (
     <Modal title={exam ? 'editar examen' : 'nuevo examen'} onClose={onClose}>
       <form onSubmit={onSubmit} className="space-y-3" noValidate>
@@ -95,7 +113,12 @@ export function ExamForm({
 
         {/* Lista compacta en rejilla: se lee mejor que muchas etiquetas [..] sueltas. */}
         <div className="space-y-0.5">
-          <span className="block">asignatura</span>
+          <div className="flex items-center justify-between">
+            <span>asignatura</span>
+            <button type="button" onClick={() => setAddingSubject(true)} className={`min-h-9 text-muted sm:min-h-0 ${linkClass}`}>
+              + nueva asignatura
+            </button>
+          </div>
           <div className="grid grid-cols-2 border-t border-l border-line sm:grid-cols-3" role="radiogroup" aria-label="Asignatura">
             {subjects.map((s) => {
               const active = values.subject_id === s.id
@@ -107,7 +130,7 @@ export function ExamForm({
                   aria-checked={active}
                   onClick={() => set({ subject_id: s.id })}
                   className={`flex min-h-11 min-w-0 items-center gap-1 border-r border-b border-line px-1 text-left sm:min-h-8 ${
-                    active ? 'bg-black text-white' : linkClass
+                    active ? 'bg-ink text-paper' : linkClass
                   }`}
                 >
                   <SubjectDot subject={s} />
@@ -152,13 +175,13 @@ export function ExamForm({
               key={q.label}
               type="button"
               onClick={() => set({ exam_date: q.date })}
-              className={`min-h-9 sm:min-h-0 ${values.exam_date === q.date ? 'text-black underline' : linkClass}`}
+              className={`min-h-9 sm:min-h-0 ${values.exam_date === q.date ? 'text-ink underline' : linkClass}`}
             >
               {q.label}
             </button>
           ))}
           {isValidIsoDate(values.exam_date) && (
-            <span className="ml-auto text-black">
+            <span className="ml-auto text-ink">
               {weekdayName(values.exam_date)} {formatDate(values.exam_date)}
             </span>
           )}

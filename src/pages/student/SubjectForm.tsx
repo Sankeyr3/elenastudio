@@ -27,7 +27,8 @@ export function SubjectForm({
   subjects: Subject[]
   examCount: number
   onClose: () => void
-  onSaved: () => Promise<void>
+  /** Recibe el id de la asignatura guardada (no se pasa al eliminar). */
+  onSaved: (savedId?: string) => Promise<void>
 }) {
   const [name, setName] = useState(subject?.name ?? '')
   const [difficulty, setDifficulty] = useState<number | null>(subject?.difficulty ?? null)
@@ -59,12 +60,12 @@ export function SubjectForm({
     setSaving(true)
     setServerError(null)
     const row = { name: name.trim(), difficulty, liking, color, icon: icon || null }
-    const { error } = subject
+    const { data, error } = subject
       ? await supabase.from('subjects').update(row).eq('id', subject.id)
-      : await supabase.from('subjects').insert(row)
+      : await supabase.from('subjects').insert(row).select('id').single()
     setSaving(false)
     if (error) return setServerError(friendlyError(error))
-    await onSaved()
+    await onSaved(subject?.id ?? (data as { id: string } | null)?.id)
     onClose()
   }
 
@@ -148,7 +149,7 @@ export function SubjectForm({
                 aria-label={SUBJECT_COLOR_LABELS[c]}
                 title={SUBJECT_COLOR_LABELS[c]}
                 onClick={() => setColor(c)}
-                className={`h-10 w-10 sm:h-5 sm:w-5 ${COLOR_CLASSES[c].dot} ${color === c ? 'outline-2 outline-offset-2 outline-black' : 'hover:opacity-70'}`}
+                className={`h-10 w-10 sm:h-5 sm:w-5 ${COLOR_CLASSES[c].dot} ${color === c ? 'outline-2 outline-offset-2 outline-ink' : 'hover:opacity-70'}`}
               />
             ))}
           </div>

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Alert, Button, Loading, Tabs } from './components/ui'
 import { friendlyError } from './lib/errors'
 import { configError, supabase } from './lib/supabase'
+import { THEMES, applyTheme, getTheme } from './lib/theme'
 import type { Profile } from './lib/types'
 import { Login, NewPassword } from './pages/Login'
 import { HelperApp, type HelperTab } from './pages/helper/HelperApp'
@@ -57,11 +58,14 @@ function SignedIn({ userId }: { userId: string }) {
 
   return (
     <div className="mx-auto max-w-3xl px-2 pb-8 sm:px-4">
-      <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-x-3 border-b border-black bg-white py-1">
+      <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-x-3 border-b border-ink bg-paper py-1">
         <span className="font-bold text-accent">elenastudio</span>
-        <Button variant="ghost" className="sm:order-last" onClick={signOut}>
-          salir
-        </Button>
+        <div className="flex sm:order-last">
+          <ThemeButton />
+          <Button variant="ghost" onClick={signOut}>
+            logout
+          </Button>
+        </div>
         {profile?.role === 'student' && (
           <Tabs
             fill
@@ -102,5 +106,20 @@ function SignedIn({ userId }: { userId: string }) {
         )}
       </main>
     </div>
+  )
+}
+
+/** Pasa al siguiente tema de la lista en cada pulsación. */
+function ThemeButton() {
+  const [theme, setTheme] = useState(getTheme)
+  const next = () => {
+    const t = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]
+    applyTheme(t)
+    setTheme(t)
+  }
+  return (
+    <Button variant="ghost" onClick={next} aria-label={`tema: ${theme} (cambiar)`}>
+      {theme}
+    </Button>
   )
 }

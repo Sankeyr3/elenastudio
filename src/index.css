@@ -2,10 +2,72 @@
 
 @theme {
   --font-mono: "Source Code Pro", "Courier New", Consolas, "Liberation Mono", Menlo, monospace;
+  /* Papel (fondo) y tinta (texto); cambian con el tema. */
+  --color-paper: #fff;
+  --color-ink: #000;
   --color-muted: #506882;
   --color-line: rgb(0 0 0 / 0.3);
   /* Color secundario: se usa con moderación (marca, hoy, acción principal, foco). */
   --color-accent: #014bc4;
+  --color-on-accent: #fff;
+}
+
+/* Temas sacados de zll.me/paste-code (light es el de arriba). */
+[data-theme='dark'] {
+  --color-paper: #000;
+  --color-ink: #fff;
+  --color-muted: #c9c9c9;
+  --color-line: rgb(255 255 255 / 0.5);
+  --color-accent: #fff;
+  --color-on-accent: #000;
+}
+
+[data-theme='funky'] {
+  --color-paper: #10142f;
+  --color-ink: #fff;
+  --color-muted: #c9c9c9;
+  --color-line: #fff;
+  --color-accent: #ff0;
+  --color-on-accent: #000;
+}
+
+[data-theme='twilight'] {
+  --color-paper: #1f1f1f;
+  --color-ink: #fff;
+  --color-muted: #e7e7e7;
+  --color-line: rgb(200 200 200 / 0.3);
+  --color-accent: #dd4a68;
+  --color-on-accent: #fff;
+}
+
+[data-theme='solarized'] {
+  --color-paper: #fffdd6;
+  --color-ink: #000;
+  --color-muted: #000;
+  --color-line: rgb(203 75 22 / 0.3);
+  --color-accent: #2aa198;
+  --color-on-accent: #000;
+}
+
+[data-theme='night'] {
+  --color-paper: #272b31;
+  --color-ink: #fff;
+  --color-muted: rgb(120 120 120);
+  --color-line: rgb(255 255 255 / 0.4);
+  /* El #433695 original no se lee como texto sobre este fondo. */
+  --color-accent: #8a7ee6;
+  --color-on-accent: #000;
+}
+
+/* En los temas oscuros, los rojos/verdes de aviso necesitan ser más claros. */
+[data-theme='dark'],
+[data-theme='funky'],
+[data-theme='twilight'],
+[data-theme='night'] {
+  color-scheme: dark;
+  --color-red-700: #f87171;
+  --color-red-50: rgb(248 113 113 / 0.15);
+  --color-green-700: #4ade80;
 }
 
 html {
@@ -13,9 +75,9 @@ html {
 }
 
 body {
-  @apply bg-white font-mono text-[15px] leading-snug text-black sm:text-[13px];
+  @apply bg-paper font-mono text-[15px] leading-snug text-ink sm:text-[13px];
 }
 
 ::selection {
-  @apply bg-accent text-white;
+  @apply bg-accent text-on-accent;
 }

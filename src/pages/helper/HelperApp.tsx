@@ -201,7 +201,7 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
       <section>
         <Heading>todos los exámenes</Heading>
         {data.exams.length ? (
-          <ExamsBrowser upcoming={data.upcoming} past={data.past} all={data.exams} today={data.today} />
+          <ExamsBrowser upcoming={data.upcoming} all={data.exams} today={data.today} />
         ) : (
           <EmptyState title={`${name} aún no ha añadido exámenes`}>
             <p>cuando lo haga, aparecerán aquí y empezarás a recibir los avisos.</p>
