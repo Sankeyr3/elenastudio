@@ -20,7 +20,6 @@ export function SettingsForm({
   onSaved: (s: ReminderSettings) => void
 }) {
   const [enabled, setEnabled] = useState(settings.enabled)
-  const [email, setEmail] = useState(settings.notify_email)
   const [offsets, setOffsets] = useState<number[]>(normalizeOffsets(settings.offsets))
   const [extra, setExtra] = useState(String(settings.hard_extra_days))
   const [newOffset, setNewOffset] = useState('')
@@ -44,14 +43,13 @@ export function SettingsForm({
     e.preventDefault()
     setSaved(false)
     const rules = { offsets, hard_extra_days: Number(extra) }
-    const invalid =
-      validateRules(rules) ?? (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) ? null : 'El correo no es válido.')
+    const invalid = validateRules(rules)
     if (invalid) return setError(invalid)
     setSaving(true)
     setError(null)
     const { data, error } = await supabase
       .from('reminder_settings')
-      .update({ enabled, notify_email: email.trim(), ...rules, updated_at: new Date().toISOString() })
+      .update({ enabled, ...rules, updated_at: new Date().toISOString() })
       .eq('helper_id', settings.helper_id)
       .select()
       .single()
@@ -69,13 +67,9 @@ export function SettingsForm({
       <label className="flex min-h-11 items-center gap-2 sm:min-h-0">
         <input type="checkbox" className="h-6 w-6 shrink-0 accent-accent sm:h-4 sm:w-4" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
         <span>
-          avisos por correo <span className="text-muted">(se revisan una vez al día, por la mañana)</span>
+          avisos por notificación <span className="text-muted">(se revisan una vez al día, por la mañana)</span>
         </span>
       </label>
-
-      <Field label="enviar a">
-        {(id) => <input id={id} type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} />}
-      </Field>
 
       <div className="space-y-0.5">
         <span className="block">avisar estos días antes de cada examen</span>

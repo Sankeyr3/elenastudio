@@ -1,11 +1,11 @@
 # ElenaStudio
 
-Pequeña aplicación privada para que Elena apunte sus exámenes y las asignaturas que más le cuestan, y para que **tú recibas recordatorios por correo** antes de cada examen y puedas escribirle o llamarla a tiempo.
+Pequeña aplicación privada para que Elena apunte sus exámenes y las asignaturas que más le cuestan, y para que **a ti te llegue una notificación al móvil** antes de cada examen y puedas escribirle o llamarla a tiempo.
 
 - **Elena** (estudiante): ve sus próximos exámenes, añade/edita/elimina exámenes y asignaturas.
-- **Tú** (ayudante): ves todo en solo lectura, configuras los plazos de aviso y consultas si los correos se han enviado.
+- **Tú** (ayudante): ves todo en solo lectura, configuras los plazos de aviso y consultas si las notificaciones se han enviado.
 
-Tecnologías: React + TypeScript + Vite, Tailwind CSS, Supabase (base de datos y login) y Vercel (web + tarea programada diaria). Correo con Resend.
+Tecnologías: React + TypeScript + Vite, Tailwind CSS, Supabase (base de datos y login) y Vercel (web + tarea programada diaria). Notificaciones Web Push (gratis, sin servicios externos).
 
 ---
 
@@ -15,9 +15,9 @@ Tecnologías: React + TypeScript + Vite, Tailwind CSS, Supabase (base de datos y
 |---|---|---|
 | Web | `src/` | Interfaz en español. Solo usa la clave **pública** de Supabase. |
 | Base de datos | `supabase/migrations/*.sql` | Tablas, permisos y políticas RLS, todo en un esquema propio `elenastudio` (puede compartir proyecto de Supabase con otra app). |
-| Tarea diaria | `api/cron/reminders.ts` + `vercel.json` | Vercel la ejecuta cada día a las 07:00 UTC (08:00–09:59 en Madrid). Calcula qué avisos tocan y envía **un solo correo** con todos ellos. |
+| Tarea diaria | `api/cron/reminders.ts` + `vercel.json` | Vercel la ejecuta cada día a las 07:00 UTC (08:00–09:59 en Madrid). Calcula qué avisos tocan y envía **una sola notificación** con todos ellos a tus móviles. |
 | Reglas de avisos | `shared/reminders.ts` | Plazos, regla de asignaturas difíciles y ventanas de envío. |
-| Correo | `api/_lib/email.ts` | Asignatura, fecha, días restantes, dificultad, nota, otros exámenes próximos y enlace a la app. |
+| Notificación | `api/_lib/notification.ts`, `api/_lib/push.ts`, `public/sw.js` | Asignatura, fecha, días restantes, dificultad y nota. Al tocarla se abre la app. |
 
 **Plazos por defecto:** 14, 7, 3 y 1 día antes. Los cambias en la pestaña **Avisos** de tu cuenta.
 
@@ -27,7 +27,7 @@ Tecnologías: React + TypeScript + Vite, Tailwind CSS, Supabase (base de datos y
 
 **Si falla un día o el examen se añade tarde:** cada plazo cubre los días hasta el siguiente. Si Elena apunta un examen que es dentro de 5 días, recibes el aviso de 7 días ese mismo día (uno solo, no tres).
 
-**Seguridad:** no hay registro público. Todas las tablas tienen RLS. Los visitantes no autenticados no tienen acceso a nada. Tu cuenta solo puede leer los datos de Elena. La clave secreta de Supabase, la de Resend y `CRON_SECRET` solo existen en Vercel (servidor), nunca en el navegador. El endpoint del cron rechaza cualquier petición sin `Authorization: Bearer <CRON_SECRET>`.
+**Seguridad:** no hay registro público. Todas las tablas tienen RLS. Los visitantes no autenticados no tienen acceso a nada. Tu cuenta solo puede leer los datos de Elena. La clave secreta de Supabase, la privada VAPID y `CRON_SECRET` solo existen en Vercel (servidor), nunca en el navegador. El endpoint del cron rechaza cualquier petición sin `Authorization: Bearer <CRON_SECRET>`.
 
 ---
 
@@ -39,8 +39,7 @@ Todo funciona con planes gratuitos:
 |---|---|---|
 | Supabase | Free | 2 proyectos gratis (ElenaStudio puede ir dentro de uno que ya tengas, ver paso 3). ⚠️ Los proyectos gratuitos **se pausan tras 7 días sin actividad**; la consulta diaria del cron debería mantenerlo activo, pero si ves que se pausa, reactívalo desde el panel (o pasa a Pro, de pago). |
 | Vercel | Hobby | Solo uso personal/no comercial. Cron **una vez al día** como máximo, con precisión de ±59 min. Suficiente para avisos por días. |
-| Resend | Free | 3.000 correos/mes, 100/día. Sin dominio propio solo puedes enviarte correos **a ti mismo** (la dirección de tu cuenta de Resend). |
-| Dominio propio | Opcional, **de pago** | Solo si quieres enviar a otras direcciones o desde un remitente propio. |
+| Web Push | Gratis | Lo ofrecen Google (Chrome/Android), Apple (Safari/iPhone) y Mozilla sin cuenta ni límites relevantes. |
 
 ---
 
@@ -54,7 +53,7 @@ Pasos **obligatorios**: 1–13 y 14. **Opcionales**: los marcados como tal.
 
 - **Node.js 22.12 o superior** (LTS): <https://nodejs.org>. Comprueba con `node -v`.
 - **Git**: <https://git-scm.com>. Comprueba con `git --version`.
-- Cuentas gratuitas en **GitHub**, **Supabase**, **Vercel** y **Resend**.
+- Cuentas gratuitas en **GitHub**, **Supabase** y **Vercel**.
 - Opcional: GitHub CLI (`gh`) y Vercel CLI (`npm i -g vercel`).
 
 ### 2. Instalar dependencias y ejecutar en local
@@ -103,8 +102,8 @@ Antes de seguir, comprueba que el proyecto no tiene ya un esquema llamado `elena
 1. En el proyecto: **SQL Editor** → **New query**.
 2. Abre `supabase/migrations/20261022000000_init.sql`, copia **todo** el contenido, pégalo y pulsa **Run**.
    Después, en una consulta nueva, haz lo mismo con `supabase/migrations/20261025000000_subject_color.sql` (añade el color de las asignaturas). **Si ya tenías la app instalada, ejecuta solo esta.**
-   Y después, en este orden, `supabase/migrations/20261026000000_subject_icon.sql` y `supabase/migrations/20261027000000_subject_icon_colors.sql` (icono dibujado de cada asignatura, con varios colores).
-3. Debe terminar con *Success. No rows returned*. En **Table Editor**, cambiando el selector de esquema de `public` a `elenastudio`, verás: `profiles`, `helper_links`, `subjects`, `exams`, `reminder_settings`, `reminder_log`.
+   Y después, en este orden, `supabase/migrations/20261026000000_subject_icon.sql` y `supabase/migrations/20261027000000_subject_icon_colors.sql` (icono dibujado de cada asignatura, con varios colores) y `supabase/migrations/20261028000000_push_notifications.sql` (avisos por notificación push en lugar de correo).
+3. Debe terminar con *Success. No rows returned*. En **Table Editor**, cambiando el selector de esquema de `public` a `elenastudio`, verás: `profiles`, `helper_links`, `subjects`, `exams`, `reminder_settings`, `reminder_log`, `push_subscriptions`.
 4. **Expón el esquema en la API** (obligatorio): **Project Settings → Data API → Exposed schemas** (en algunos paneles, *Settings → API*), añade `elenastudio` a la lista **sin quitar los que ya hay** (la otra app los necesita) y guarda. Si te lo salta, la app mostrará “El esquema "elenastudio" no está expuesto…”.
 
 > Ejecútalo una sola vez. Si lo repites, fallará con "already exists" (es normal; no hace falta volver a ejecutarlo).
@@ -128,9 +127,9 @@ En **Project Settings → API Keys** (o con el botón **Connect** arriba):
 | `VITE_USE_MOCKS` | Solo `.env.local` (opcional) | No | `true` para usar datos de prueba sin Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | Solo Vercel | **Sí** | Clave secret/service_role |
 | `CRON_SECRET` | Solo Vercel | **Sí** | Cadena aleatoria de 32+ caracteres |
-| `RESEND_API_KEY` | Solo Vercel | **Sí** | API key de Resend |
-| `EMAIL_FROM` | Solo Vercel | No | `ElenaStudio <onboarding@resend.dev>` o tu remitente verificado |
-| `APP_URL` | Solo Vercel | No | `https://<tu-proyecto>.vercel.app` (enlace del correo) |
+| `VITE_VAPID_PUBLIC_KEY` | Vercel (y `.env.local` si quieres) | No | Clave pública VAPID (paso 14) |
+| `VAPID_PRIVATE_KEY` | Solo Vercel | **Sí** | Clave privada VAPID (paso 14) |
+| `APP_URL` | Solo Vercel | No | `https://<tu-proyecto>.vercel.app` (se abre al tocar la notificación) |
 
 Para generar `CRON_SECRET`:
 
@@ -174,7 +173,7 @@ En **SQL Editor**, sustituye los correos y nombres y ejecuta:
 select elenastudio.setup_accounts('correo-de-elena@ejemplo.com', 'tu-correo@ejemplo.com', 'Elena', 'Tu nombre');
 ```
 
-Esto crea los perfiles (Elena = `student`, tú = `helper`), el vínculo entre ambos y tus preferencias de avisos con los plazos por defecto. Los avisos se envían al correo de tu cuenta (puedes cambiarlo en la pestaña **Avisos**). Esta función solo puede ejecutarse desde el SQL Editor; la app no tiene permiso para llamarla.
+Esto crea los perfiles (Elena = `student`, tú = `helper`), el vínculo entre ambos y tus preferencias de avisos con los plazos por defecto. Los avisos llegarán a los móviles en los que actives las notificaciones (paso 14). Esta función solo puede ejecutarse desde el SQL Editor; la app no tiene permiso para llamarla.
 
 Comprueba:
 
@@ -220,7 +219,7 @@ Antes de subir, comprueba que `.env.local` **no** aparece en `git status` (está
 
 **Project → Settings → Environment Variables**, para el entorno **Production** (y Preview si lo usas):
 
-`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `APP_URL` (ver tabla del paso 6). Marca las secretas como **Sensitive**.
+`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `VITE_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `APP_URL` (ver tabla del paso 6). Marca las secretas como **Sensitive**.
 
 > Tras añadir o cambiar variables hay que **volver a desplegar** (Deployments → ⋯ → Redeploy). Las `VITE_*` se incrustan en la web al compilar.
 
@@ -238,32 +237,39 @@ Ya está configurada en `vercel.json`:
 - Vercel envía automáticamente `Authorization: Bearer <CRON_SECRET>`. Sin `CRON_SECRET` el endpoint responde 500 y no hace nada; con una cabecera incorrecta, 401.
 - Si quieres otra hora, cambia el `schedule` (formato cron, en UTC) y vuelve a desplegar. En Hobby no se permite más de una ejecución al día.
 
-### 14. Configurar el envío de correos y comprobar que funciona
+### 14. Activar las notificaciones en tu móvil y comprobar que funcionan
 
-1. Crea una cuenta en <https://resend.com> **con el mismo correo en el que quieres recibir los avisos** (sin dominio propio, Resend solo permite enviarte correos a esa dirección).
-2. **API Keys → Create API Key** (permiso *Sending access*). Cópiala a `RESEND_API_KEY` en Vercel.
-3. `EMAIL_FROM` = `ElenaStudio <onboarding@resend.dev>`.
-4. Asegúrate de que el correo de la pestaña **Avisos** de tu cuenta coincide con el de Resend.
-5. Vuelve a desplegar.
-6. Envía un **correo de prueba** (no registra ningún aviso). Desde PowerShell (usa `curl.exe`, no `curl`):
+1. Genera las claves VAPID (una sola vez):
+
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+   Pon la **Public Key** en `VITE_VAPID_PUBLIC_KEY` y la **Private Key** en `VAPID_PRIVATE_KEY` (Sensitive) en Vercel, y vuelve a desplegar. Si las cambias más adelante, tendrás que activar otra vez las notificaciones en cada móvil.
+2. Abre la app publicada **en tu móvil** y entra con tu cuenta:
+   - **Android (Chrome):** pestaña **Avisos → activar notificaciones aquí** y acepta el permiso. Recomendado: menú ⋮ → *Añadir a pantalla de inicio* para tenerla como una app.
+   - **iPhone (iOS 16.4 o posterior):** primero, en Safari, **Compartir → Añadir a pantalla de inicio**. Abre ElenaStudio desde ese icono (no desde Safari), ve a **Avisos → activar notificaciones aquí** y acepta.
+   Puedes activarlas en varios dispositivos; el aviso llega a todos.
+3. Pulsa **enviar notificación de prueba**. Debe aparecerte una notificación “[Prueba] ElenaStudio” como la de cualquier otra app.
+4. También puedes lanzar una prueba con los exámenes reales (no registra ningún aviso). Desde PowerShell (usa `curl.exe`, no `curl`):
 
    ```powershell
    curl.exe -H "Authorization: Bearer PEGA_AQUI_TU_CRON_SECRET" "https://<tu-proyecto>.vercel.app/api/cron/reminders?test=1"
    ```
 
-   Respuesta esperada: `{"today":"...","results":[{"test":true,"ok":true,...}]}` y un correo “[Prueba] …” en tu bandeja (mira también en spam).
+   Respuesta esperada: `{"today":"...","results":[{"test":true,"ok":true,"delivered":1,...}]}`.
 
-7. Para ver **qué avisos tocarían hoy** sin enviar ni guardar nada:
+5. Para ver **qué avisos tocarían hoy** sin enviar ni guardar nada:
 
    ```powershell
    curl.exe -H "Authorization: Bearer PEGA_AQUI_TU_CRON_SECRET" "https://<tu-proyecto>.vercel.app/api/cron/reminders?dry=1"
    ```
 
-8. Prueba real: pide a Elena (o entra con su cuenta) que añada un examen para dentro de 3 días y pulsa **Run** en *Settings → Cron Jobs*. Recibirás el correo y en tu pestaña **Avisos → Historial de envíos** aparecerá como *Enviado*. Si vuelves a pulsar **Run**, no se envía otra vez.
+6. Prueba real: pide a Elena (o entra con su cuenta) que añada un examen para dentro de 3 días y pulsa **Run** en *Settings → Cron Jobs*. Te llegará la notificación y en tu pestaña **Avisos → Historial de envíos** aparecerá como *ok*. Si vuelves a pulsar **Run**, no se envía otra vez.
 
-*Opcional — enviar a cualquier dirección o con remitente propio:* en Resend, **Domains → Add Domain**, añade los registros DNS que te indique en tu proveedor de dominio (de pago) y cambia `EMAIL_FROM` a algo como `ElenaStudio <avisos@tudominio.com>`.
-
-> Mientras falte `RESEND_API_KEY` o `EMAIL_FROM`, los avisos **no se envían**: quedan como *Error* en el historial con el mensaje “Correo sin configurar…”, y se reintentan al día siguiente.
+> Mientras no haya ningún móvil con las notificaciones activadas (o falten las claves VAPID), los avisos **no se envían**: quedan como *error* en el historial con el motivo, y se reintentan al día siguiente.
+>
+> Si desinstalas la app, borras los datos del navegador o bloqueas las notificaciones, ese dispositivo deja de recibirlas y se elimina solo de la lista en el siguiente envío. Vuelve a activarlas desde **Avisos**.
 
 ### 15. Verificar la privacidad y que no hace falta tener la web abierta
 
@@ -280,7 +286,7 @@ Ya está configurada en `vercel.json`:
 - Las mismas comprobaciones están automatizadas en `tests/db.test.ts` (`npm test`): anónimo sin acceso, Elena solo con sus datos, ayudante en solo lectura, usuarios de la otra app sin acceso, sin acceso a datos no vinculados y sin duplicados en los avisos.
 - En el navegador (F12 → Sources) solo aparece la clave publishable; nunca la secreta.
 
-**Recordatorios sin la web abierta:** el envío lo hace el servidor de Vercel cada mañana. No depende de que Elena ni tú tengáis la app abierta. Para comprobarlo, cierra todas las pestañas, pulsa **Run** en *Settings → Cron Jobs* (o espera al día siguiente) y revisa **View Logs** y tu correo.
+**Recordatorios sin la web abierta:** el envío lo hace el servidor de Vercel cada mañana. No depende de que Elena ni tú tengáis la app abierta. Para comprobarlo, cierra todas las pestañas, pulsa **Run** en *Settings → Cron Jobs* (o espera al día siguiente) y revisa **View Logs** y tu móvil.
 
 ### 16. Errores habituales
 
@@ -296,8 +302,11 @@ Ya está configurada en `vercel.json`:
 | “No tienes permiso para hacer esto” | Estás intentando editar con la cuenta de ayudante, o los roles se asignaron al revés: vuelve a ejecutar `setup_accounts` con los correos en el orden correcto (primero Elena). |
 | El cron responde 401 | `CRON_SECRET` en Vercel no coincide con el de tu cabecera, o no se redesplegó tras crearlo. |
 | El cron responde 500 “Faltan SUPABASE…” | Falta `SUPABASE_SERVICE_ROLE_KEY` (o la URL) en Vercel. |
-| Historial: “Resend 403/422 … only send testing emails to your own email” | Sin dominio verificado solo puedes enviar al correo de tu cuenta de Resend. Pon ese correo en **Avisos → Enviar a**, o verifica un dominio. |
-| Historial: “Correo sin configurar” | Falta `RESEND_API_KEY` o `EMAIL_FROM` en Vercel. |
+| Historial: “No hay ningún móvil con las notificaciones activadas” | Abre la app en tu móvil → **Avisos → activar notificaciones aquí** (paso 14). |
+| Historial: “Notificaciones sin configurar” | Faltan `VITE_VAPID_PUBLIC_KEY` o `VAPID_PRIVATE_KEY` en Vercel. Añádelas y vuelve a desplegar. |
+| Historial: “push 403 …” | Las claves VAPID cambiaron después de activar las notificaciones. Desactívalas y actívalas de nuevo en el móvil. |
+| En iPhone no aparece el botón de activar | Solo funciona con la app añadida a la pantalla de inicio y abierta desde ese icono (iOS 16.4+). |
+| La prueba dice “enviada” pero no aparece nada | Revisa que el móvil no tenga las notificaciones de Chrome/ElenaStudio silenciadas, ni el modo *No molestar* o ahorro de batería extremo. |
 | No aparece el cron en Vercel | Solo existe en producción. Comprueba que `vercel.json` está en el repositorio y que hay un despliegue de producción. |
 | El deploy falla con “Hobby accounts are limited to daily cron jobs” | Has puesto un `schedule` de más de una vez al día. |
 | No llega ningún aviso aunque hay exámenes | Mira **Avisos → Próximos recordatorios**: puede que aún no toque. Comprueba que los avisos están activados y revisa *Cron Jobs → View Logs*. Usa `?dry=1` para ver qué tocaría hoy. |
@@ -310,7 +319,8 @@ Ya está configurada en `vercel.json`:
 
 ```
 api/cron/reminders.ts     Endpoint del cron (Vercel Function)
-api/_lib/                 Plan de avisos y plantilla del correo
+api/push/test.ts          Notificación de prueba desde la pestaña Avisos
+api/_lib/                 Plan de avisos, texto de la notificación y envío Web Push
 shared/                   Fechas (Europe/Madrid, DD/MM/AAAA) y reglas de avisos, compartidas con la web
 src/                      Aplicación React
   pages/student/          Pantallas de Elena (exámenes y asignaturas)

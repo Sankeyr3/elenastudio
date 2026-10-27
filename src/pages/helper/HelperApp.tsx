@@ -8,6 +8,7 @@ import { friendlyError } from '../../lib/errors'
 import { supabase } from '../../lib/supabase'
 import type { ExamWithSubject, Profile, ReminderLog, ReminderSettings } from '../../lib/types'
 import { useStudentData } from '../../lib/useStudentData'
+import { PushSetup } from './PushSetup'
 import { ReminderLogList } from './ReminderLogList'
 import { SettingsForm } from './SettingsForm'
 
@@ -45,18 +46,22 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
   const data = useStudentData(student.id)
   const [settings, setSettings] = useState<ReminderSettings | null>(null)
   const [logs, setLogs] = useState<ReminderLog[]>([])
+  const [deviceCount, setDeviceCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const loadReminders = useCallback(async () => {
-    const [settingsRes, logsRes] = await Promise.all([
+    const [settingsRes, logsRes, devicesRes] = await Promise.all([
       supabase.from('reminder_settings').select('*').eq('helper_id', helperId).maybeSingle(),
       supabase.from('reminder_log').select('*').eq('helper_id', helperId).order('created_at', { ascending: false }).limit(100),
+      supabase.from('push_subscriptions').select('id').eq('helper_id', helperId),
     ])
-    if (settingsRes.error || logsRes.error) setError(friendlyError(settingsRes.error ?? logsRes.error))
+    if (settingsRes.error || logsRes.error || devicesRes.error)
+      setError(friendlyError(settingsRes.error ?? logsRes.error ?? devicesRes.error))
     else {
       setSettings(settingsRes.data as ReminderSettings | null)
       setLogs(logsRes.data as ReminderLog[])
+      setDeviceCount(devicesRes.data.length)
     }
     setLoading(false)
   }, [helperId])
@@ -97,6 +102,13 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
         {anyError && <Alert>{anyError}</Alert>}
         <section>
           <Heading as="h1">avisos</Heading>
+          <p className="mb-2 text-muted">
+            te llegará una notificación al móvil cuando toque avisar a {name} de un examen.
+          </p>
+          <PushSetup onDevicesChange={setDeviceCount} />
+        </section>
+        <section>
+          <Heading>cuándo avisar</Heading>
           {settings ? (
             <SettingsForm settings={settings} onSaved={setSettings} />
           ) : (
@@ -126,7 +138,10 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
         </p>
       </div>
       {anyError && <Alert>{anyError}</Alert>}
-      {settings && !settings.enabled && <Alert tone="info">los avisos por correo están desactivados (pestaña [avisos]).</Alert>}
+      {settings && !settings.enabled && <Alert tone="info">los avisos están desactivados (pestaña [avisos]).</Alert>}
+      {settings?.enabled && deviceCount === 0 && (
+        <Alert tone="info">aún no has activado las notificaciones en tu móvil: pestaña [avisos] → «activar notificaciones aquí».</Alert>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section>

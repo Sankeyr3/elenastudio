@@ -64,15 +64,15 @@ function seed(): Tables {
       {
         helper_id: HELPER_ID,
         enabled: true,
-        notify_email: 'david@example.com',
         offsets: DEFAULT_OFFSETS,
         hard_extra_days: DEFAULT_HARD_EXTRA_DAYS,
       },
     ],
+    push_subscriptions: [],
     reminder_log: [
       log('l-1', 'e-1', exams[0].exam_date, 3, 'Matemáticas', 'sent', 1, null, at(-1)),
       log('l-2', 'e-1', exams[0].exam_date, 7, 'Matemáticas', 'sent', 1, null, at(-5)),
-      log('l-3', 'e-2', exams[1].exam_date, 7, 'Historia', 'failed', 2, 'Correo sin configurar (modo mock)', at(-2)),
+      log('l-3', 'e-2', exams[1].exam_date, 7, 'Historia', 'failed', 2, 'No hay ningún móvil con las notificaciones activadas (modo mock)', at(-2)),
       log('l-4', 'e-6', exams[5].exam_date, 1, 'Historia', 'sent', 1, null, at(-7)),
     ],
   }

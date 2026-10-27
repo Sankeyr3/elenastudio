@@ -1,4 +1,4 @@
-// Prueba el endpoint del cron con un cliente de Supabase falso en memoria y un fetch simulado para Resend.
+// Prueba el endpoint del cron con un cliente de Supabase falso en memoria y un envío push simulado.
 // (La reserva atómica real de avisos se prueba en SQL en db.test.ts.)
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -19,22 +19,30 @@ interface LogRow {
 const state = {
   exams: [] as Record<string, unknown>[],
   logs: [] as LogRow[],
+  subscriptions: [] as Record<string, unknown>[],
 }
 
 function fakeClient() {
   const tables: Record<string, () => Record<string, unknown>[]> = {
     helper_links: () => [{ student_id: STUDENT, helper_id: HELPER }],
     reminder_settings: () => [
-      { helper_id: HELPER, enabled: true, notify_email: 'yo@example.org', offsets: [14, 7, 3, 1], hard_extra_days: 7 },
+      { helper_id: HELPER, enabled: true, offsets: [14, 7, 3, 1], hard_extra_days: 7 },
     ],
     profiles: () => [{ id: STUDENT, display_name: 'Elena' }],
     exams: () => state.exams,
+    push_subscriptions: () => state.subscriptions,
   }
   return {
     from(table: string) {
       let rows = tables[table]()
       const builder = {
         select: () => builder,
+        delete: () => builder,
+        // Solo se usa para borrar suscripciones caducadas.
+        in: (col: string, values: unknown[]) => {
+          state.subscriptions = state.subscriptions.filter((r) => !values.includes(r[col]))
+          return builder
+        },
         eq: (col: string, v: unknown) => ((rows = rows.filter((r) => r[col] === v)), builder),
         gte: (col: string, v: string) => ((rows = rows.filter((r) => String(r[col]) >= v)), builder),
         lte: (col: string, v: string) => ((rows = rows.filter((r) => String(r[col]) <= v)), builder),
@@ -78,12 +86,31 @@ function fakeClient() {
 
 vi.mock('@supabase/supabase-js', () => ({ createClient: () => fakeClient() }))
 
+class FakeWebPushError extends Error {
+  constructor(
+    public statusCode: number,
+    public body: string,
+  ) {
+    super(`push ${statusCode}`)
+  }
+}
+let pushCalls: { endpoint: string; payload: { title: string; body: string; url: string } }[]
+let pushFailures: Record<string, FakeWebPushError>
+vi.mock('web-push', () => ({
+  default: {
+    WebPushError: FakeWebPushError,
+    sendNotification: async (sub: { endpoint: string }, payload: string) => {
+      if (pushFailures[sub.endpoint]) throw pushFailures[sub.endpoint]
+      pushCalls.push({ endpoint: sub.endpoint, payload: JSON.parse(payload) })
+      return { statusCode: 201 }
+    },
+  },
+}))
+
 const { GET } = await import('../api/cron/reminders')
 
 const call = (query = '', auth: string | null = 'Bearer secreto-de-prueba-123456') =>
   GET(new Request(`https://app.test/api/cron/reminders${query}`, { headers: auth ? { authorization: auth } : {} }))
-
-let resendCalls: { to: string[]; subject: string; text: string }[]
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -91,8 +118,8 @@ beforeEach(() => {
   vi.stubEnv('CRON_SECRET', 'secreto-de-prueba-123456')
   vi.stubEnv('VITE_SUPABASE_URL', 'https://demo.supabase.co')
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-key')
-  vi.stubEnv('RESEND_API_KEY', 're_test')
-  vi.stubEnv('EMAIL_FROM', 'ElenaStudio <onboarding@resend.dev>')
+  vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'clave-publica')
+  vi.stubEnv('VAPID_PRIVATE_KEY', 'clave-privada')
   vi.stubEnv('APP_URL', 'https://elenastudio.vercel.app')
   state.logs = []
   state.exams = [
@@ -100,14 +127,11 @@ beforeEach(() => {
     { id: 'e2', student_id: STUDENT, exam_date: '2026-10-29', exam_time: null, note: null, subject: { name: 'Dibujo técnico', difficulty: 1, liking: 'mucho' } },
     { id: 'e3', student_id: STUDENT, exam_date: '2026-12-20', exam_time: null, note: null, subject: { name: 'Inglés', difficulty: 2, liking: null } },
   ]
-  resendCalls = []
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async (_url: string, init: RequestInit) => {
-      resendCalls.push(JSON.parse(String(init.body)))
-      return Response.json({ id: `email-${resendCalls.length}` })
-    }),
-  )
+  state.subscriptions = [
+    { id: 'sub-movil', helper_id: HELPER, endpoint: 'https://push.example/movil', p256dh: 'p', auth: 'a' },
+  ]
+  pushCalls = []
+  pushFailures = {}
 })
 
 afterEach(() => {
@@ -120,7 +144,7 @@ describe('GET /api/cron/reminders', () => {
   it('rechaza peticiones sin el secreto correcto', async () => {
     expect((await call('', null)).status).toBe(401)
     expect((await call('', 'Bearer otro')).status).toBe(401)
-    expect(resendCalls).toHaveLength(0)
+    expect(pushCalls).toHaveLength(0)
     expect(state.logs).toHaveLength(0)
   })
 
@@ -129,15 +153,16 @@ describe('GET /api/cron/reminders', () => {
     expect((await call()).status).toBe(500)
   })
 
-  it('envía un único correo con los avisos de hoy y no los repite', async () => {
+  it('envía una única notificación con los avisos de hoy y no los repite', async () => {
     const res = await call()
     expect(res.status).toBe(200)
-    expect(resendCalls).toHaveLength(1)
-    const [email] = resendCalls
-    expect(email.to).toEqual(['yo@example.org'])
-    expect(email.subject).toBe('Elena: 2 exámenes que vigilar')
-    expect(email.text).toContain('Historia — jueves 29/10/2026 a las 09:00 (en 7 días)')
-    expect(email.text).toContain('Dibujo técnico')
+    expect(pushCalls).toHaveLength(1)
+    const [{ endpoint, payload }] = pushCalls
+    expect(endpoint).toBe('https://push.example/movil')
+    expect(payload.title).toBe('Avisa a Elena: 2 exámenes')
+    expect(payload.body).toContain('• Historia: en 7 días (29/10/2026), dificultad 5/5')
+    expect(payload.body).toContain('Dibujo técnico')
+    expect(payload.url).toBe('https://elenastudio.vercel.app')
     expect(state.logs.map((l) => [l.exam_id, l.offset_days, l.status])).toEqual([
       ['e1', 7, 'sent'],
       ['e2', 7, 'sent'],
@@ -146,39 +171,58 @@ describe('GET /api/cron/reminders', () => {
     // Segunda ejecución el mismo día (Vercel puede duplicar invocaciones): no se envía nada.
     const again = await call()
     expect(await again.json()).toMatchObject({ results: [{ sent: 0, alreadySent: 2 }] })
-    expect(resendCalls).toHaveLength(1)
+    expect(pushCalls).toHaveLength(1)
   })
 
-  it('registra el error si falta configurar el correo, y reintenta cuando ya está', async () => {
-    vi.stubEnv('RESEND_API_KEY', '')
+  it('envía a todos los dispositivos del ayudante', async () => {
+    state.subscriptions.push({ id: 'sub-tablet', helper_id: HELPER, endpoint: 'https://push.example/tablet', p256dh: 'p', auth: 'a' })
+    const body = await (await call()).json()
+    expect(body.results[0]).toMatchObject({ sent: 2, devices: 2 })
+    expect(pushCalls.map((c) => c.endpoint)).toEqual(['https://push.example/movil', 'https://push.example/tablet'])
+  })
+
+  it('registra el error si faltan las claves VAPID, y reintenta cuando ya están', async () => {
+    vi.stubEnv('VAPID_PRIVATE_KEY', '')
     const res = await call()
     expect(res.status).toBe(502)
-    expect(resendCalls).toHaveLength(0)
-    expect(state.logs.every((l) => l.status === 'failed' && /RESEND_API_KEY/.test(l.last_error ?? ''))).toBe(true)
+    expect(pushCalls).toHaveLength(0)
+    expect(state.logs.every((l) => l.status === 'failed' && /VAPID_PRIVATE_KEY/.test(l.last_error ?? ''))).toBe(true)
 
-    vi.stubEnv('RESEND_API_KEY', 're_test')
+    vi.stubEnv('VAPID_PRIVATE_KEY', 'clave-privada')
     expect((await call()).status).toBe(200)
-    expect(resendCalls).toHaveLength(1)
+    expect(pushCalls).toHaveLength(1)
     expect(state.logs.every((l) => l.status === 'sent' && l.attempts === 2)).toBe(true)
   })
 
-  it('registra los errores de Resend', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ message: 'Invalid `to` field' }, { status: 422 })))
+  it('si no hay ningún móvil suscrito, el aviso queda como error', async () => {
+    state.subscriptions = []
+    expect((await call()).status).toBe(502)
+    expect(state.logs[0]).toMatchObject({ status: 'failed', last_error: expect.stringMatching(/ningún móvil/) })
+  })
+
+  it('olvida los dispositivos caducados (410) y registra los demás errores', async () => {
+    state.subscriptions.push({ id: 'sub-viejo', helper_id: HELPER, endpoint: 'https://push.example/viejo', p256dh: 'p', auth: 'a' })
+    pushFailures['https://push.example/viejo'] = new FakeWebPushError(410, 'Gone')
+    expect((await call()).status).toBe(200)
+    expect(state.subscriptions.map((s) => s.id)).toEqual(['sub-movil'])
+
+    state.logs = []
+    pushFailures['https://push.example/movil'] = new FakeWebPushError(403, 'BadJwtToken')
     await call()
-    expect(state.logs[0]).toMatchObject({ status: 'failed', last_error: 'Resend 422: Invalid `to` field' })
+    expect(state.logs[0]).toMatchObject({ status: 'failed', last_error: 'No se pudo enviar la notificación: push 403: BadJwtToken' })
   })
 
   it('?dry=1 no envía ni registra nada', async () => {
     const body = await (await call('?dry=1')).json()
     expect(body.results[0].due).toHaveLength(2)
-    expect(resendCalls).toHaveLength(0)
+    expect(pushCalls).toHaveLength(0)
     expect(state.logs).toHaveLength(0)
   })
 
-  it('?test=1 envía un correo de prueba sin registrar avisos', async () => {
+  it('?test=1 envía una notificación de prueba sin registrar avisos', async () => {
     await call('?test=1')
-    expect(resendCalls).toHaveLength(1)
-    expect(resendCalls[0].subject).toMatch(/^\[Prueba\]/)
+    expect(pushCalls).toHaveLength(1)
+    expect(pushCalls[0].payload.title).toMatch(/^\[Prueba\] Avisa a Elena/)
     expect(state.logs).toHaveLength(0)
   })
 })

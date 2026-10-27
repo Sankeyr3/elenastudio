@@ -63,6 +63,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('supabase/migrations/20261025000000_subject_color.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261026000000_subject_icon.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261027000000_subject_icon_colors.sql', 'utf8'))
+  await db.exec(readFileSync('supabase/migrations/20261028000000_push_notifications.sql', 'utf8'))
   await db.query(`select elenastudio.setup_accounts('elena@example.org', 'YO@example.org', 'Elena', 'David')`)
 })
 
@@ -70,10 +71,10 @@ describe('setup_accounts', () => {
   it('crea perfiles, vínculo y preferencias por defecto', async () => {
     const profiles = await db.query<{ role: string }>('select role from elenastudio.profiles order by role')
     expect(profiles.rows.map((r) => r.role)).toEqual(['student', 'helper'])
-    const settings = await db.query<{ offsets: number[]; notify_email: string }>(
-      'select offsets, notify_email from elenastudio.reminder_settings',
+    const settings = await db.query<{ offsets: number[]; enabled: boolean }>(
+      'select offsets, enabled from elenastudio.reminder_settings',
     )
-    expect(settings.rows[0]).toEqual({ offsets: [14, 7, 3, 1], notify_email: 'yo@example.org' })
+    expect(settings.rows[0]).toEqual({ offsets: [14, 7, 3, 1], enabled: true })
   })
 
   it('no la puede ejecutar ningún usuario de la app', async () => {
@@ -163,6 +164,12 @@ describe('Elena (estudiante)', () => {
     expect(await as(ELENA, 'select * from elenastudio.reminder_log')).toEqual([])
   })
 
+  it('no puede registrar dispositivos para notificaciones (solo el ayudante)', async () => {
+    await expect(
+      as(ELENA, `insert into elenastudio.push_subscriptions (endpoint, p256dh, auth) values ('https://push.example/elena', 'p', 'a')`),
+    ).rejects.toThrow(/row-level security/)
+  })
+
   it('no puede escribir en el registro de avisos ni reservar envíos', async () => {
     await expect(
       as(ELENA, `insert into elenastudio.reminder_log (helper_id, exam_date, offset_days, subject_name)
@@ -236,6 +243,31 @@ describe('Ayudante (solo lectura)', () => {
     )
   })
 
+  it('registra y borra sus dispositivos para notificaciones, y no puede hacerlo por otros', async () => {
+    const [own] = await as<{ id: string }>(
+      HELPER,
+      `insert into elenastudio.push_subscriptions (endpoint, p256dh, auth, device)
+       values ('https://push.example/movil', 'p256', 'auth', 'Chrome en Android') returning id`,
+    )
+    expect(await as(HELPER, 'select device from elenastudio.push_subscriptions')).toEqual([{ device: 'Chrome en Android' }])
+    await expect(
+      as(HELPER, `insert into elenastudio.push_subscriptions (helper_id, endpoint, p256dh, auth) values ($1, 'https://push.example/x', 'p', 'a')`, [
+        ELENA,
+      ]),
+    ).rejects.toThrow(/row-level security/)
+    await expect(
+      as(HELPER, `insert into elenastudio.push_subscriptions (endpoint, p256dh, auth) values ('http://inseguro.example', 'p', 'a')`),
+    ).rejects.toThrow(/check/)
+    await expect(as(HELPER, `update elenastudio.push_subscriptions set endpoint = 'https://otro.example'`)).rejects.toThrow(
+      /permission denied/,
+    )
+    // Nadie más lo ve; la tarea programada (service_role) sí.
+    expect(await as(ELENA, 'select * from elenastudio.push_subscriptions')).toEqual([])
+    expect(await as(OTHER_APP, 'select * from elenastudio.push_subscriptions')).toEqual([])
+    expect(await asService('select id from elenastudio.push_subscriptions')).toEqual([{ id: own.id }])
+    expect(await as(HELPER, 'delete from elenastudio.push_subscriptions where id = $1 returning id', [own.id])).toHaveLength(1)
+  })
+
   it('no puede cambiar su rol ni el vínculo', async () => {
     await expect(as(HELPER, `update elenastudio.profiles set role = 'student'`)).rejects.toThrow(/permission denied/)
     await expect(
@@ -246,7 +278,7 @@ describe('Ayudante (solo lectura)', () => {
 
 describe('Usuario de la otra aplicación del proyecto', () => {
   it('no ve nada ni puede crear datos en elenastudio', async () => {
-    for (const table of ['profiles', 'helper_links', 'subjects', 'exams', 'reminder_settings', 'reminder_log']) {
+    for (const table of ['profiles', 'helper_links', 'subjects', 'exams', 'reminder_settings', 'reminder_log', 'push_subscriptions']) {
       expect(await as(OTHER_APP, `select * from elenastudio.${table}`)).toEqual([])
     }
     await expect(
@@ -263,7 +295,7 @@ describe('Usuario de la otra aplicación del proyecto', () => {
 
 describe('Visitante no autenticado', () => {
   it('no puede leer ni escribir nada', async () => {
-    for (const table of ['profiles', 'helper_links', 'subjects', 'exams', 'reminder_settings', 'reminder_log']) {
+    for (const table of ['profiles', 'helper_links', 'subjects', 'exams', 'reminder_settings', 'reminder_log', 'push_subscriptions']) {
       await expect(as(null, `select * from elenastudio.${table}`)).rejects.toThrow(/permission denied/)
     }
     await expect(as(null, `select elenastudio.claim_reminders('[]'::jsonb)`)).rejects.toThrow(/permission denied/)
@@ -285,7 +317,7 @@ describe('Reserva de avisos (sin duplicados)', () => {
     const second = await asService('select * from elenastudio.claim_reminders($1)', [JSON.stringify(item())])
     expect(second).toEqual([])
 
-    await asService('select elenastudio.finish_reminders($1, true, null, $2)', [[first[0].id], 'email_123'])
+    await asService('select elenastudio.finish_reminders($1, true, null)', [[first[0].id]])
     const third = await asService('select * from elenastudio.claim_reminders($1)', [JSON.stringify(item())])
     expect(third).toEqual([])
     const [log] = await as<{ status: string; attempts: number }>(HELPER, 'select status, attempts from elenastudio.reminder_log')
@@ -297,7 +329,7 @@ describe('Reserva de avisos (sin duplicados)', () => {
     let claimed = await asService<{ id: string }>('select * from elenastudio.claim_reminders($1)', [JSON.stringify(other)])
     for (let attempt = 1; attempt <= 5; attempt++) {
       expect(claimed).toHaveLength(1)
-      await asService('select elenastudio.finish_reminders($1, false, $2, null)', [[claimed[0].id], 'Error de prueba'])
+      await asService('select elenastudio.finish_reminders($1, false, $2)', [[claimed[0].id], 'Error de prueba'])
       claimed = await asService('select * from elenastudio.claim_reminders($1)', [JSON.stringify(other)])
     }
     expect(claimed).toEqual([])

@@ -1,0 +1,6 @@
+# Archivos que `vercel deploy` no debe subir desde tu ordenador (Vercel compila la app en su servidor).
+.env
+.env.*
+!.env.example
+dist
+node_modules

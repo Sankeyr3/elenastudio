@@ -35,9 +35,16 @@ export interface ExamWithSubject extends Exam {
 export interface ReminderSettings {
   helper_id: string
   enabled: boolean
-  notify_email: string
   offsets: number[]
   hard_extra_days: number
+}
+
+/** Dispositivo con las notificaciones push activadas. */
+export interface PushDevice {
+  id: string
+  endpoint: string
+  device: string | null
+  created_at: string
 }
 
 export interface ReminderLog {

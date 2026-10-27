@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { addDays, daysBetween, formatDate, isValidIsoDate, todayInMadrid } from '../shared/dates'
 import { dueOffset, needsAttention, nextReminder, offsetsForExam, validateRules } from '../shared/reminders'
-import { buildReminderEmail } from '../api/_lib/email'
+import { buildReminderNotification } from '../api/_lib/notification'
 import { planReminders, type ExamRow } from '../api/_lib/plan'
 
 describe('fechas', () => {
@@ -90,7 +90,7 @@ const exam = (id: string, date: string, name: string, difficulty: number, note: 
   subject: { name, difficulty, liking: null },
 })
 
-describe('planReminders + correo', () => {
+describe('planReminders + notificación', () => {
   const today = '2026-10-22'
   const exams = [
     exam('h', '2026-11-12', 'Historia', 5, 'Temas 1-4'), // 21 días, difícil -> aviso adelantado
@@ -113,25 +113,32 @@ describe('planReminders + correo', () => {
     expect(upcoming.map((e) => e.id)).toEqual(['m', 'i', 'f', 'd', 'h'])
   })
 
-  it('el correo incluye los datos pedidos y escapa HTML', () => {
-    const { due, upcoming } = planReminders(
-      [...exams, exam('x', '2026-10-24', '<script>', 2)],
-      { offsets: [14, 7, 3, 1], hard_extra_days: 7 },
-      today,
-    )
-    const email = buildReminderEmail({
+  it('la notificación de un examen incluye fecha, dificultad y nota', () => {
+    const { due } = planReminders(exams, { offsets: [14, 7, 3, 1], hard_extra_days: 7 }, today)
+    const notification = buildReminderNotification({
       studentName: 'Elena',
       reminders: due.filter((r) => r.id === 'h'),
-      upcoming,
       appUrl: 'https://elenastudio.vercel.app',
     })
-    expect(email.subject).toBe('Elena: Historia en 21 días (12/11/2026)')
-    expect(email.text).toContain('Historia — jueves 12/11/2026 (en 21 días)')
-    expect(email.text).toContain('Dificultad: 5/5')
-    expect(email.text).toContain('Nota: Temas 1-4')
-    expect(email.text).toContain('25/10/2026 (en 3 días): Matemáticas')
-    expect(email.text).toContain('https://elenastudio.vercel.app')
-    expect(email.html).toContain('&lt;script&gt;')
-    expect(email.html).not.toContain('<script>')
+    expect(notification.title).toBe('Avisa a Elena: Historia en 21 días')
+    expect(notification.body).toContain('jueves 12/11/2026. Asignatura difícil')
+    expect(notification.body).toContain('Dificultad 5/5')
+    expect(notification.body).toContain('Nota: Temas 1-4')
+    expect(notification.url).toBe('https://elenastudio.vercel.app')
+    expect(notification.tag).toBe('elenastudio-reminders')
+  })
+
+  it('con varios exámenes los resume en una sola notificación', () => {
+    const { due } = planReminders(exams, { offsets: [14, 7, 3, 1], hard_extra_days: 7 }, today)
+    const notification = buildReminderNotification({ studentName: 'Elena', reminders: due, appUrl: null })
+    expect(notification.title).toBe('Avisa a Elena: 5 exámenes')
+    expect(notification.body.split('\n')[0]).toBe('• Matemáticas: en 3 días (25/10/2026), dificultad 3/5')
+    expect(notification.url).toBe('/')
+  })
+
+  it('la prueba sin exámenes lleva un texto genérico', () => {
+    const notification = buildReminderNotification({ studentName: 'Elena', reminders: [], appUrl: null, test: true })
+    expect(notification.title).toBe('[Prueba] ElenaStudio')
+    expect(notification.body).toContain('recordar a Elena')
   })
 })

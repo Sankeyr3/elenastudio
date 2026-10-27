@@ -1,17 +1,19 @@
-// Tarea programada: Vercel la llama una vez al día (ver vercel.json) y envía los avisos que tocan.
+// Tarea programada: Vercel la llama una vez al día (ver vercel.json) y envía los avisos que tocan
+// como notificación push a los móviles del ayudante.
 //
 // Seguridad: solo responde si la cabecera Authorization es "Bearer <CRON_SECRET>".
 // Vercel añade esa cabecera automáticamente cuando la variable CRON_SECRET existe en el proyecto.
 //
 // Parámetros opcionales (también requieren la cabecera):
 //   ?dry=1   no envía ni guarda nada; devuelve qué avisos tocarían hoy.
-//   ?test=1  envía un correo de prueba con los exámenes próximos, sin registrar avisos.
+//   ?test=1  envía una notificación de prueba con los exámenes próximos, sin registrar avisos.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { timingSafeEqual } from 'node:crypto'
 import { addDays, todayInMadrid } from '../../shared/dates.js'
 import { DEFAULT_HARD_EXTRA_DAYS, DEFAULT_OFFSETS, offsetsForExam } from '../../shared/reminders.js'
-import { buildReminderEmail, type EmailReminder } from '../_lib/email.js'
-import { planReminders, type ExamRow } from '../_lib/plan.js'
+import { buildReminderNotification } from '../_lib/notification.js'
+import { planReminders, type DueReminder, type ExamRow } from '../_lib/plan.js'
+import { sendToHelper } from '../_lib/push.js'
 
 export const config = { maxDuration: 30 }
 
@@ -25,32 +27,6 @@ function authorized(header: string | null, secret: string): boolean {
   return received.length === expected.length && timingSafeEqual(received, expected)
 }
 
-interface SendResult {
-  ok: boolean
-  id: string | null
-  error: string | null
-}
-
-async function sendEmail(to: string, email: { subject: string; html: string; text: string }): Promise<SendResult> {
-  const apiKey = process.env.RESEND_API_KEY
-  const from = process.env.EMAIL_FROM
-  if (!apiKey || !from) {
-    return { ok: false, id: null, error: 'Correo sin configurar: faltan RESEND_API_KEY o EMAIL_FROM en Vercel.' }
-  }
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from, to: [to], ...email }),
-    })
-    const body = (await res.json().catch(() => ({}))) as { id?: string; message?: string }
-    if (!res.ok) return { ok: false, id: null, error: `Resend ${res.status}: ${body.message ?? 'error desconocido'}` }
-    return { ok: true, id: body.id ?? null, error: null }
-  } catch (err) {
-    return { ok: false, id: null, error: `No se pudo contactar con Resend: ${(err as Error).message}` }
-  }
-}
-
 async function processHelper(
   db: SupabaseClient<any, 'elenastudio'>,
   link: { student_id: string; helper_id: string },
@@ -59,7 +35,7 @@ async function processHelper(
 ) {
   const { data: settings, error: settingsError } = await db
     .from('reminder_settings')
-    .select('enabled, notify_email, offsets, hard_extra_days')
+    .select('enabled, offsets, hard_extra_days')
     .eq('helper_id', link.helper_id)
     .maybeSingle()
   if (settingsError) throw settingsError
@@ -88,14 +64,15 @@ async function processHelper(
   const appUrl = process.env.APP_URL || null
 
   if (mode.test) {
-    const sample: EmailReminder[] = due.length
+    const sample: DueReminder[] = due.length
       ? due
       : upcoming.slice(0, 1).map((e) => ({ ...e, offset: e.daysLeft, hardExtra: false }))
-    const result = await sendEmail(
-      settings.notify_email,
-      buildReminderEmail({ studentName, reminders: sample, upcoming, appUrl, test: true }),
+    const result = await sendToHelper(
+      db,
+      link.helper_id,
+      buildReminderNotification({ studentName, reminders: sample, appUrl, test: true }),
     )
-    return { helper: link.helper_id, test: true, to: settings.notify_email, ...result }
+    return { helper: link.helper_id, test: true, ...result }
   }
 
   if (mode.dry) {
@@ -125,19 +102,15 @@ async function processHelper(
   const claimedKeys = new Set(claimedRows.map((c) => `${c.exam_id}:${c.offset_days}`))
   const reminders = due.filter((r) => claimedKeys.has(`${r.id}:${r.offset}`))
 
-  const result = await sendEmail(
-    settings.notify_email,
-    buildReminderEmail({ studentName, reminders, upcoming, appUrl }),
-  )
+  const result = await sendToHelper(db, link.helper_id, buildReminderNotification({ studentName, reminders, appUrl }))
   const { error: finishError } = await db.rpc('finish_reminders', {
     p_ids: claimedRows.map((c) => c.id),
     p_ok: result.ok,
     p_error: result.error,
-    p_email_id: result.id,
   })
   if (finishError) throw finishError
 
-  return { helper: link.helper_id, sent: result.ok ? reminders.length : 0, error: result.error }
+  return { helper: link.helper_id, sent: result.ok ? reminders.length : 0, devices: result.delivered, error: result.error }
 }
 
 export async function GET(request: Request): Promise<Response> {

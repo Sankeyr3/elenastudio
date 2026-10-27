@@ -2,7 +2,23 @@
 import { daysBetween } from '../../shared/dates.js'
 import type { Liking } from '../../shared/labels.js'
 import { CONTEXT_WINDOW_DAYS, dueOffset, normalizeOffsets, offsetsForExam, type ReminderRules } from '../../shared/reminders.js'
-import type { EmailExam, EmailReminder } from './email.js'
+
+export interface PlannedExam {
+  id: string
+  subjectName: string
+  examDate: string
+  examTime: string | null
+  daysLeft: number
+  difficulty: number
+  liking: Liking | null
+  note: string | null
+}
+
+export interface DueReminder extends PlannedExam {
+  offset: number
+  /** El aviso es el adelanto extra por ser una asignatura difícil. */
+  hardExtra: boolean
+}
 
 export interface ExamRow {
   id: string
@@ -12,7 +28,7 @@ export interface ExamRow {
   subject: { name: string; difficulty: number; liking: Liking | null } | null
 }
 
-export function toEmailExam(row: ExamRow, today: string): EmailExam {
+export function toPlannedExam(row: ExamRow, today: string): PlannedExam {
   return {
     id: row.id,
     subjectName: row.subject?.name ?? 'Asignatura',
@@ -27,12 +43,12 @@ export function toEmailExam(row: ExamRow, today: string): EmailExam {
 
 export function planReminders(exams: ExamRow[], rules: ReminderRules, today: string) {
   const all = exams
-    .map((row) => toEmailExam(row, today))
+    .map((row) => toPlannedExam(row, today))
     .filter((e) => e.daysLeft >= 0)
     .sort((a, b) => a.examDate.localeCompare(b.examDate) || (a.examTime ?? '99').localeCompare(b.examTime ?? '99'))
 
   const baseMax = normalizeOffsets(rules.offsets)[0]
-  const due: EmailReminder[] = []
+  const due: DueReminder[] = []
   for (const exam of all) {
     const offset = dueOffset(exam.daysLeft, offsetsForExam(exam.difficulty, rules))
     if (offset !== null) due.push({ ...exam, offset, hardExtra: offset > baseMax })

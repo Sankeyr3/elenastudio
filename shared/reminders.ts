@@ -9,7 +9,7 @@ export const HARD_DIFFICULTY = 4
 export const MAX_OFFSETS = 6
 export const MAX_OFFSET_DAYS = 90
 export const MAX_HARD_EXTRA_DAYS = 30
-/** Ventana de "otros exámenes próximos" que se muestran en cada correo. */
+/** Ventana de "exámenes próximos" que se tienen en cuenta (p. ej. para la notificación de prueba). */
 export const CONTEXT_WINDOW_DAYS = 21
 
 export interface ReminderRules {
