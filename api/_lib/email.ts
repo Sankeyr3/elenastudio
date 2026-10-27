@@ -58,13 +58,13 @@ export function buildReminderEmail(input: ReminderEmailInput): { subject: string
 
   const subject =
     reminders.length === 0
-      ? `${prefix}ElenaStudy: recordatorios de ${studentName}`
+      ? `${prefix}ElenaStudio: recordatorios de ${studentName}`
       : reminders.length === 1
       ? `${prefix}${studentName}: ${reminders[0].subjectName} ${daysText(reminders[0].daysLeft)} (${formatDate(reminders[0].examDate)})`
       : `${prefix}${studentName}: ${reminders.length} exámenes que vigilar`
 
   const text: string[] = [
-    input.test ? 'Esto es un correo de prueba de ElenaStudy. Los avisos reales tendrán este formato.\n' : '',
+    input.test ? 'Esto es un correo de prueba de ElenaStudio. Los avisos reales tendrán este formato.\n' : '',
     `Recordatorios de exámenes de ${studentName}:`,
     '',
   ]
@@ -80,7 +80,7 @@ export function buildReminderEmail(input: ReminderEmailInput): { subject: string
   text.push(`Otros exámenes próximos de ${studentName}:`)
   if (others.length === 0) text.push('  Ninguno en las próximas semanas.')
   for (const e of others) text.push(`  - ${formatDate(e.examDate)} (${daysText(e.daysLeft)}): ${e.subjectName}, dificultad ${e.difficulty}/5`)
-  if (appUrl) text.push('', `Abrir ElenaStudy: ${appUrl}`)
+  if (appUrl) text.push('', `Abrir ElenaStudio: ${appUrl}`)
 
   const card = (r: EmailReminder) => `
     <div style="border:1px solid #e0e7ff;border-radius:12px;padding:16px;margin:0 0 12px;background:#fff">
@@ -117,7 +117,7 @@ export function buildReminderEmail(input: ReminderEmailInput): { subject: string
     }
     ${
       appUrl
-        ? `<p style="margin:24px 0 0"><a href="${escapeHtml(appUrl)}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:600">Abrir ElenaStudy</a></p>`
+        ? `<p style="margin:24px 0 0"><a href="${escapeHtml(appUrl)}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:600">Abrir ElenaStudio</a></p>`
         : ''
     }
   </div></body></html>`

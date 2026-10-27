@@ -52,7 +52,7 @@ async function sendEmail(to: string, email: { subject: string; html: string; tex
 }
 
 async function processHelper(
-  db: SupabaseClient<any, 'elenastudy'>,
+  db: SupabaseClient<any, 'elenastudio'>,
   link: { student_id: string; helper_id: string },
   today: string,
   mode: { dry: boolean; test: boolean },
@@ -154,7 +154,7 @@ export async function GET(request: Request): Promise<Response> {
   const params = new URL(request.url).searchParams
   const mode = { dry: params.get('dry') === '1', test: params.get('test') === '1' }
   const db = createClient(supabaseUrl, serviceKey, {
-    db: { schema: 'elenastudy' },
+    db: { schema: 'elenastudio' },
     auth: { persistSession: false, autoRefreshToken: false },
   })
   const today = todayInMadrid()

@@ -4,7 +4,7 @@ export function friendlyError(error: unknown): string {
     typeof error === 'object' && error && 'message' in error ? String((error as { message: unknown }).message) : String(error)
 
   if (/PGRST106|Invalid schema|schema must be one of/i.test(message))
-    return 'El esquema "elenastudy" no está expuesto en Supabase (README, paso 4: Data API > Exposed schemas).'
+    return 'El esquema "elenastudio" no está expuesto en Supabase (README, paso 4: Data API > Exposed schemas).'
   if (/Invalid login credentials/i.test(message)) return 'Correo o contraseña incorrectos.'
   if (/Email not confirmed/i.test(message)) return 'Esta cuenta aún no está confirmada. Revisa la configuración en Supabase.'
   if (/Failed to fetch|NetworkError|Load failed/i.test(message)) return 'No hay conexión. Comprueba tu internet e inténtalo de nuevo.'

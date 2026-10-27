@@ -1,6 +1,6 @@
 // Service worker mínimo para que la app sea instalable y arranque sin conexión.
 // Los datos (Supabase, /api) siempre van a la red: solo se guarda la propia app.
-const CACHE = 'elenastudy-v1'
+const CACHE = 'elenastudio-v1'
 const SHELL = ['/', '/favicon.ico', '/manifest.webmanifest', '/icon-192.png']
 
 self.addEventListener('install', (event) => {

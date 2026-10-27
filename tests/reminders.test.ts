@@ -123,14 +123,14 @@ describe('planReminders + correo', () => {
       studentName: 'Elena',
       reminders: due.filter((r) => r.id === 'h'),
       upcoming,
-      appUrl: 'https://elenastudy.vercel.app',
+      appUrl: 'https://elenastudio.vercel.app',
     })
     expect(email.subject).toBe('Elena: Historia en 21 días (12/11/2026)')
     expect(email.text).toContain('Historia — jueves 12/11/2026 (en 21 días)')
     expect(email.text).toContain('Dificultad: 5/5')
     expect(email.text).toContain('Nota: Temas 1-4')
     expect(email.text).toContain('25/10/2026 (en 3 días): Matemáticas')
-    expect(email.text).toContain('https://elenastudy.vercel.app')
+    expect(email.text).toContain('https://elenastudio.vercel.app')
     expect(email.html).toContain('&lt;script&gt;')
     expect(email.html).not.toContain('<script>')
   })

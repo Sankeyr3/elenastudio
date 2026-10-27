@@ -92,8 +92,8 @@ beforeEach(() => {
   vi.stubEnv('VITE_SUPABASE_URL', 'https://demo.supabase.co')
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service-key')
   vi.stubEnv('RESEND_API_KEY', 're_test')
-  vi.stubEnv('EMAIL_FROM', 'ElenaStudy <onboarding@resend.dev>')
-  vi.stubEnv('APP_URL', 'https://elenastudy.vercel.app')
+  vi.stubEnv('EMAIL_FROM', 'ElenaStudio <onboarding@resend.dev>')
+  vi.stubEnv('APP_URL', 'https://elenastudio.vercel.app')
   state.logs = []
   state.exams = [
     { id: 'e1', student_id: STUDENT, exam_date: '2026-10-29', exam_time: '09:00:00', note: 'Tema 3', subject: { name: 'Historia', difficulty: 5, liking: 'poco' } },

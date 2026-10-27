@@ -1,6 +1,6 @@
 {
-  "name": "ElenaStudy",
-  "short_name": "ElenaStudy",
+  "name": "ElenaStudio",
+  "short_name": "ElenaStudio",
   "description": "Calendario de exámenes y recordatorios de estudio.",
   "lang": "es",
   "start_url": "/",
