@@ -7,7 +7,7 @@ import { beforeAll, describe, expect, it } from 'vitest'
 const ELENA = '11111111-1111-1111-1111-111111111111'
 const HELPER = '22222222-2222-2222-2222-222222222222'
 const STRANGER = '33333333-3333-3333-3333-333333333333'
-// Usuario de la otra aplicación que comparte el proyecto de Supabase (sin perfil en estudion).
+// Usuario de la otra aplicación que comparte el proyecto de Supabase (sin perfil en elenastudy).
 const OTHER_APP = '44444444-4444-4444-4444-444444444444'
 
 const SUPABASE_STUB = `
@@ -63,24 +63,24 @@ beforeAll(async () => {
   await db.exec(readFileSync('supabase/migrations/20261025000000_subject_color.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261026000000_subject_icon.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261027000000_subject_icon_colors.sql', 'utf8'))
-  await db.query(`select estudion.setup_accounts('elena@example.org', 'YO@example.org', 'Elena', 'David')`)
+  await db.query(`select elenastudy.setup_accounts('elena@example.org', 'YO@example.org', 'Elena', 'David')`)
 })
 
 describe('setup_accounts', () => {
   it('crea perfiles, vínculo y preferencias por defecto', async () => {
-    const profiles = await db.query<{ role: string }>('select role from estudion.profiles order by role')
+    const profiles = await db.query<{ role: string }>('select role from elenastudy.profiles order by role')
     expect(profiles.rows.map((r) => r.role)).toEqual(['student', 'helper'])
     const settings = await db.query<{ offsets: number[]; notify_email: string }>(
-      'select offsets, notify_email from estudion.reminder_settings',
+      'select offsets, notify_email from elenastudy.reminder_settings',
     )
     expect(settings.rows[0]).toEqual({ offsets: [14, 7, 3, 1], notify_email: 'yo@example.org' })
   })
 
   it('no la puede ejecutar ningún usuario de la app', async () => {
-    await expect(as(ELENA, `select estudion.setup_accounts('elena@example.org', 'otra@example.org')`)).rejects.toThrow(
+    await expect(as(ELENA, `select elenastudy.setup_accounts('elena@example.org', 'otra@example.org')`)).rejects.toThrow(
       /permission denied/,
     )
-    await expect(asService(`select estudion.setup_accounts('elena@example.org', 'otra@example.org')`)).rejects.toThrow(
+    await expect(asService(`select elenastudy.setup_accounts('elena@example.org', 'otra@example.org')`)).rejects.toThrow(
       /permission denied/,
     )
   })
@@ -90,7 +90,7 @@ describe('Elena (estudiante)', () => {
   it('crea asignaturas', async () => {
     const rows = await as<{ id: string }>(
       ELENA,
-      `insert into estudion.subjects (name, difficulty, liking) values
+      `insert into elenastudy.subjects (name, difficulty, liking) values
          ('Historia', 5, 'poco'), ('Dibujo técnico', 1, 'mucho') returning id`,
     )
     ;[historyId, drawingId] = rows.map((r) => r.id)
@@ -98,126 +98,126 @@ describe('Elena (estudiante)', () => {
   })
 
   it('no puede repetir el nombre de una asignatura', async () => {
-    await expect(as(ELENA, `insert into estudion.subjects (name, difficulty) values (' historia ', 3)`)).rejects.toThrow(
+    await expect(as(ELENA, `insert into elenastudy.subjects (name, difficulty) values (' historia ', 3)`)).rejects.toThrow(
       /subjects_student_name_key/,
     )
   })
 
   it('valida la escala de dificultad', async () => {
-    await expect(as(ELENA, `insert into estudion.subjects (name, difficulty) values ('Física', 6)`)).rejects.toThrow(
+    await expect(as(ELENA, `insert into elenastudy.subjects (name, difficulty) values ('Física', 6)`)).rejects.toThrow(
       /check/,
     )
   })
 
   it('guarda un icono dibujado y rechaza contenido que no sea un trazado válido', async () => {
-    const updated = await as(ELENA, `update estudion.subjects set icon = 'M10 20L30 40M50 50L50 50' where id = $1 returning icon`, [
+    const updated = await as(ELENA, `update elenastudy.subjects set icon = 'M10 20L30 40M50 50L50 50' where id = $1 returning icon`, [
       historyId,
     ])
     expect(updated).toEqual([{ icon: 'M10 20L30 40M50 50L50 50' }])
     const multicolor = '#e11d48M10 20L30 40#000000M50 50L50 50cM1 1L2 2'
-    const colored = await as(ELENA, `update estudion.subjects set icon = $2 where id = $1 returning icon`, [historyId, multicolor])
+    const colored = await as(ELENA, `update elenastudy.subjects set icon = $2 where id = $1 returning icon`, [historyId, multicolor])
     expect(colored).toEqual([{ icon: multicolor }])
     await expect(
-      as(ELENA, `update estudion.subjects set icon = '"/><script>alert(1)</script>' where id = $1`, [historyId]),
+      as(ELENA, `update elenastudy.subjects set icon = '"/><script>alert(1)</script>' where id = $1`, [historyId]),
     ).rejects.toThrow(/check/)
   })
 
   it('crea varios exámenes el mismo día, edita y borra', async () => {
     const rows = await as<{ id: string }>(
       ELENA,
-      `insert into estudion.exams (subject_id, exam_date, exam_time, note) values
+      `insert into elenastudy.exams (subject_id, exam_date, exam_time, note) values
          ($1, '2026-11-10', '09:00', 'Temas 1-4'), ($2, '2026-11-10', null, null), ($2, '2026-11-20', null, null)
        returning id`,
       [historyId, drawingId],
     )
     expect(rows).toHaveLength(3)
 
-    const updated = await as(ELENA, `update estudion.exams set note = 'Temas 1-5' where id = $1 returning note`, [
+    const updated = await as(ELENA, `update elenastudy.exams set note = 'Temas 1-5' where id = $1 returning note`, [
       rows[0].id,
     ])
     expect(updated).toEqual([{ note: 'Temas 1-5' }])
 
-    const deleted = await as(ELENA, `delete from estudion.exams where id = $1 returning id`, [rows[2].id])
+    const deleted = await as(ELENA, `delete from elenastudy.exams where id = $1 returning id`, [rows[2].id])
     expect(deleted).toHaveLength(1)
   })
 
   it('no puede crear datos a nombre de otra persona', async () => {
     await expect(
-      as(ELENA, `insert into estudion.subjects (student_id, name, difficulty) values ($1, 'Inglés', 2)`, [HELPER]),
+      as(ELENA, `insert into elenastudy.subjects (student_id, name, difficulty) values ($1, 'Inglés', 2)`, [HELPER]),
     ).rejects.toThrow(/row-level security/)
   })
 
   it('no puede usar una asignatura de otra estudiante', async () => {
-    await db.query(`insert into estudion.profiles values ($1, 'student', 'Otra')`, [STRANGER])
+    await db.query(`insert into elenastudy.profiles values ($1, 'student', 'Otra')`, [STRANGER])
     const [other] = await as<{ id: string }>(
       STRANGER,
-      `insert into estudion.subjects (name, difficulty) values ('Latín', 3) returning id`,
+      `insert into elenastudy.subjects (name, difficulty) values ('Latín', 3) returning id`,
     )
     await expect(
-      as(ELENA, `insert into estudion.exams (subject_id, exam_date) values ($1, '2026-11-11')`, [other.id]),
+      as(ELENA, `insert into elenastudy.exams (subject_id, exam_date) values ($1, '2026-11-11')`, [other.id]),
     ).rejects.toThrow(/foreign key/)
   })
 
   it('no ve las preferencias ni el registro de avisos del ayudante', async () => {
-    expect(await as(ELENA, 'select * from estudion.reminder_settings')).toEqual([])
-    expect(await as(ELENA, 'select * from estudion.reminder_log')).toEqual([])
+    expect(await as(ELENA, 'select * from elenastudy.reminder_settings')).toEqual([])
+    expect(await as(ELENA, 'select * from elenastudy.reminder_log')).toEqual([])
   })
 
   it('no puede escribir en el registro de avisos ni reservar envíos', async () => {
     await expect(
-      as(ELENA, `insert into estudion.reminder_log (helper_id, exam_date, offset_days, subject_name)
+      as(ELENA, `insert into elenastudy.reminder_log (helper_id, exam_date, offset_days, subject_name)
                  values ($1, '2026-11-10', 7, 'x')`, [HELPER]),
     ).rejects.toThrow(/permission denied/)
-    await expect(as(ELENA, `select estudion.claim_reminders('[]'::jsonb)`)).rejects.toThrow(/permission denied/)
+    await expect(as(ELENA, `select elenastudy.claim_reminders('[]'::jsonb)`)).rejects.toThrow(/permission denied/)
   })
 
   it('borrar una asignatura con exámenes directamente falla; con delete_subject se borran ambos', async () => {
-    await expect(as(ELENA, 'delete from estudion.subjects where id = $1', [historyId])).rejects.toThrow(/foreign key/)
+    await expect(as(ELENA, 'delete from elenastudy.subjects where id = $1', [historyId])).rejects.toThrow(/foreign key/)
 
     const [{ id: tmp }] = await as<{ id: string }>(
       ELENA,
-      `insert into estudion.subjects (name, difficulty) values ('Química', 4) returning id`,
+      `insert into elenastudy.subjects (name, difficulty) values ('Química', 4) returning id`,
     )
-    await as(ELENA, `insert into estudion.exams (subject_id, exam_date) values ($1, '2026-12-01')`, [tmp])
-    await as(ELENA, 'select estudion.delete_subject($1)', [tmp])
-    expect(await as(ELENA, 'select id from estudion.subjects where id = $1', [tmp])).toEqual([])
-    expect(await as(ELENA, 'select id from estudion.exams where subject_id = $1', [tmp])).toEqual([])
+    await as(ELENA, `insert into elenastudy.exams (subject_id, exam_date) values ($1, '2026-12-01')`, [tmp])
+    await as(ELENA, 'select elenastudy.delete_subject($1)', [tmp])
+    expect(await as(ELENA, 'select id from elenastudy.subjects where id = $1', [tmp])).toEqual([])
+    expect(await as(ELENA, 'select id from elenastudy.exams where subject_id = $1', [tmp])).toEqual([])
   })
 })
 
 describe('Ayudante (solo lectura)', () => {
   it('ve los exámenes, asignaturas y el perfil de Elena', async () => {
-    expect(await as(HELPER, 'select name from estudion.subjects order by name')).toEqual([
+    expect(await as(HELPER, 'select name from elenastudy.subjects order by name')).toEqual([
       { name: 'Dibujo técnico' },
       { name: 'Historia' },
     ])
-    expect(await as(HELPER, 'select id from estudion.exams')).toHaveLength(2)
-    expect(await as(HELPER, `select display_name from estudion.profiles order by display_name`)).toEqual([
+    expect(await as(HELPER, 'select id from elenastudy.exams')).toHaveLength(2)
+    expect(await as(HELPER, `select display_name from elenastudy.profiles order by display_name`)).toEqual([
       { display_name: 'David' },
       { display_name: 'Elena' },
     ])
   })
 
   it('no ve datos de estudiantes no vinculadas', async () => {
-    expect(await as(HELPER, `select id from estudion.subjects where name = 'Latín'`)).toEqual([])
+    expect(await as(HELPER, `select id from elenastudy.subjects where name = 'Latín'`)).toEqual([])
   })
 
   it('no puede crear, editar ni borrar asignaturas o exámenes', async () => {
     await expect(
-      as(HELPER, `insert into estudion.subjects (student_id, name, difficulty) values ($1, 'Inglés', 2)`, [ELENA]),
+      as(HELPER, `insert into elenastudy.subjects (student_id, name, difficulty) values ($1, 'Inglés', 2)`, [ELENA]),
     ).rejects.toThrow(/row-level security/)
     await expect(
-      as(HELPER, `insert into estudion.exams (student_id, subject_id, exam_date) values ($1, $2, '2026-11-12')`, [
+      as(HELPER, `insert into elenastudy.exams (student_id, subject_id, exam_date) values ($1, $2, '2026-11-12')`, [
         ELENA,
         historyId,
       ]),
     ).rejects.toThrow(/row-level security/)
-    expect(await as(HELPER, `update estudion.subjects set difficulty = 1 returning id`)).toEqual([])
-    expect(await as(HELPER, `update estudion.exams set note = 'hack' returning id`)).toEqual([])
-    expect(await as(HELPER, `delete from estudion.exams returning id`)).toEqual([])
-    await expect(as(HELPER, 'select estudion.delete_subject($1)', [historyId])).rejects.toThrow(/no encontrada/)
+    expect(await as(HELPER, `update elenastudy.subjects set difficulty = 1 returning id`)).toEqual([])
+    expect(await as(HELPER, `update elenastudy.exams set note = 'hack' returning id`)).toEqual([])
+    expect(await as(HELPER, `delete from elenastudy.exams returning id`)).toEqual([])
+    await expect(as(HELPER, 'select elenastudy.delete_subject($1)', [historyId])).rejects.toThrow(/no encontrada/)
     const [{ difficulty }] = await db.query<{ difficulty: number }>(
-      'select difficulty from estudion.subjects where id = $1',
+      'select difficulty from elenastudy.subjects where id = $1',
       [historyId],
     ).then((r) => r.rows)
     expect(difficulty).toBe(5)
@@ -226,34 +226,34 @@ describe('Ayudante (solo lectura)', () => {
   it('puede editar sus preferencias de avisos, con validación', async () => {
     const rows = await as(
       HELPER,
-      `update estudion.reminder_settings set offsets = '{10,5,2}', hard_extra_days = 4 returning offsets`,
+      `update elenastudy.reminder_settings set offsets = '{10,5,2}', hard_extra_days = 4 returning offsets`,
     )
     expect(rows).toEqual([{ offsets: [10, 5, 2] }])
-    await expect(as(HELPER, `update estudion.reminder_settings set offsets = '{}'`)).rejects.toThrow(/check/)
-    await expect(as(HELPER, `update estudion.reminder_settings set offsets = '{200}'`)).rejects.toThrow(/check/)
-    await expect(as(HELPER, `update estudion.reminder_settings set helper_id = $1`, [ELENA])).rejects.toThrow(
+    await expect(as(HELPER, `update elenastudy.reminder_settings set offsets = '{}'`)).rejects.toThrow(/check/)
+    await expect(as(HELPER, `update elenastudy.reminder_settings set offsets = '{200}'`)).rejects.toThrow(/check/)
+    await expect(as(HELPER, `update elenastudy.reminder_settings set helper_id = $1`, [ELENA])).rejects.toThrow(
       /permission denied/,
     )
   })
 
   it('no puede cambiar su rol ni el vínculo', async () => {
-    await expect(as(HELPER, `update estudion.profiles set role = 'student'`)).rejects.toThrow(/permission denied/)
+    await expect(as(HELPER, `update elenastudy.profiles set role = 'student'`)).rejects.toThrow(/permission denied/)
     await expect(
-      as(HELPER, `insert into estudion.helper_links values ($1, $2)`, [STRANGER, HELPER]),
+      as(HELPER, `insert into elenastudy.helper_links values ($1, $2)`, [STRANGER, HELPER]),
     ).rejects.toThrow(/permission denied/)
   })
 })
 
 describe('Usuario de la otra aplicación del proyecto', () => {
-  it('no ve nada ni puede crear datos en estudion', async () => {
+  it('no ve nada ni puede crear datos en elenastudy', async () => {
     for (const table of ['profiles', 'helper_links', 'subjects', 'exams', 'reminder_settings', 'reminder_log']) {
-      expect(await as(OTHER_APP, `select * from estudion.${table}`)).toEqual([])
+      expect(await as(OTHER_APP, `select * from elenastudy.${table}`)).toEqual([])
     }
     await expect(
-      as(OTHER_APP, `insert into estudion.subjects (name, difficulty) values ('Spam', 1)`),
+      as(OTHER_APP, `insert into elenastudy.subjects (name, difficulty) values ('Spam', 1)`),
     ).rejects.toThrow(/row-level security/)
-    expect(await as(OTHER_APP, `update estudion.exams set note = 'x' returning id`)).toEqual([])
-    await expect(as(OTHER_APP, `select estudion.claim_reminders('[]'::jsonb)`)).rejects.toThrow(/permission denied/)
+    expect(await as(OTHER_APP, `update elenastudy.exams set note = 'x' returning id`)).toEqual([])
+    await expect(as(OTHER_APP, `select elenastudy.claim_reminders('[]'::jsonb)`)).rejects.toThrow(/permission denied/)
   })
 
   it('las tablas de la otra aplicación en public no se tocan', async () => {
@@ -264,10 +264,10 @@ describe('Usuario de la otra aplicación del proyecto', () => {
 describe('Visitante no autenticado', () => {
   it('no puede leer ni escribir nada', async () => {
     for (const table of ['profiles', 'helper_links', 'subjects', 'exams', 'reminder_settings', 'reminder_log']) {
-      await expect(as(null, `select * from estudion.${table}`)).rejects.toThrow(/permission denied/)
+      await expect(as(null, `select * from elenastudy.${table}`)).rejects.toThrow(/permission denied/)
     }
-    await expect(as(null, `select estudion.claim_reminders('[]'::jsonb)`)).rejects.toThrow(/permission denied/)
-    await expect(as(null, `select estudion.delete_subject($1)`, [historyId])).rejects.toThrow(/permission denied/)
+    await expect(as(null, `select elenastudy.claim_reminders('[]'::jsonb)`)).rejects.toThrow(/permission denied/)
+    await expect(as(null, `select elenastudy.delete_subject($1)`, [historyId])).rejects.toThrow(/permission denied/)
   })
 })
 
@@ -276,41 +276,41 @@ describe('Reserva de avisos (sin duplicados)', () => {
   let examId: string
 
   beforeAll(async () => {
-    examId = (await db.query<{ id: string }>(`select id from estudion.exams where note = 'Temas 1-5'`)).rows[0].id
+    examId = (await db.query<{ id: string }>(`select id from elenastudy.exams where note = 'Temas 1-5'`)).rows[0].id
   })
 
   it('un aviso solo se reserva una vez', async () => {
-    const first = await asService<{ id: string }>('select * from estudion.claim_reminders($1)', [JSON.stringify(item())])
+    const first = await asService<{ id: string }>('select * from elenastudy.claim_reminders($1)', [JSON.stringify(item())])
     expect(first).toHaveLength(1)
-    const second = await asService('select * from estudion.claim_reminders($1)', [JSON.stringify(item())])
+    const second = await asService('select * from elenastudy.claim_reminders($1)', [JSON.stringify(item())])
     expect(second).toEqual([])
 
-    await asService('select estudion.finish_reminders($1, true, null, $2)', [[first[0].id], 'email_123'])
-    const third = await asService('select * from estudion.claim_reminders($1)', [JSON.stringify(item())])
+    await asService('select elenastudy.finish_reminders($1, true, null, $2)', [[first[0].id], 'email_123'])
+    const third = await asService('select * from elenastudy.claim_reminders($1)', [JSON.stringify(item())])
     expect(third).toEqual([])
-    const [log] = await as<{ status: string; attempts: number }>(HELPER, 'select status, attempts from estudion.reminder_log')
+    const [log] = await as<{ status: string; attempts: number }>(HELPER, 'select status, attempts from elenastudy.reminder_log')
     expect(log).toMatchObject({ status: 'sent', attempts: 1 })
   })
 
   it('un aviso fallido se reintenta, hasta 5 intentos', async () => {
     const other = [{ ...item()[0], offset_days: 3 }]
-    let claimed = await asService<{ id: string }>('select * from estudion.claim_reminders($1)', [JSON.stringify(other)])
+    let claimed = await asService<{ id: string }>('select * from elenastudy.claim_reminders($1)', [JSON.stringify(other)])
     for (let attempt = 1; attempt <= 5; attempt++) {
       expect(claimed).toHaveLength(1)
-      await asService('select estudion.finish_reminders($1, false, $2, null)', [[claimed[0].id], 'Error de prueba'])
-      claimed = await asService('select * from estudion.claim_reminders($1)', [JSON.stringify(other)])
+      await asService('select elenastudy.finish_reminders($1, false, $2, null)', [[claimed[0].id], 'Error de prueba'])
+      claimed = await asService('select * from elenastudy.claim_reminders($1)', [JSON.stringify(other)])
     }
     expect(claimed).toEqual([])
   })
 
   it('si cambia la fecha del examen, los avisos vuelven a aplicarse', async () => {
     const moved = [{ ...item()[0], exam_date: '2026-11-17' }]
-    expect(await asService('select * from estudion.claim_reminders($1)', [JSON.stringify(moved)])).toHaveLength(1)
+    expect(await asService('select * from elenastudy.claim_reminders($1)', [JSON.stringify(moved)])).toHaveLength(1)
   })
 
   it('al borrar el examen se conserva el historial', async () => {
-    await as(ELENA, 'delete from estudion.exams where id = $1', [examId])
-    const logs = await as<{ exam_id: string | null }>(HELPER, 'select exam_id from estudion.reminder_log')
+    await as(ELENA, 'delete from elenastudy.exams where id = $1', [examId])
+    const logs = await as<{ exam_id: string | null }>(HELPER, 'select exam_id from elenastudy.reminder_log')
     expect(logs.length).toBeGreaterThan(0)
     expect(logs.every((l) => l.exam_id === null)).toBe(true)
   })

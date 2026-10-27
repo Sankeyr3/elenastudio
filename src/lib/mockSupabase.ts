@@ -4,7 +4,7 @@ import { DEFAULT_HARD_EXTRA_DAYS, DEFAULT_OFFSETS } from '../../shared/reminders
 /**
  * Cliente falso de Supabase para probar el frontend sin conexión (VITE_USE_MOCKS=true).
  * Implementa solo lo que usa la app. Los datos se guardan en localStorage; para reiniciarlos
- * borra la clave "estudion-mock-v5" (o usa resetMockData() desde la consola).
+ * borra la clave "elenastudy-mock-v1" (o usa resetMockData() desde la consola).
  */
 
 type Row = Record<string, unknown>
@@ -12,7 +12,7 @@ type Tables = Record<string, Row[]>
 type Result = { data: unknown; error: { message: string; code?: string } | null; count?: null }
 type AuthEvent = 'INITIAL_SESSION' | 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED'
 
-const STORAGE_KEY = 'estudion-mock-v5'
+const STORAGE_KEY = 'elenastudy-mock-v1'
 const DELAY_MS = 150
 
 const STUDENT_ID = '00000000-0000-0000-0000-000000000001'

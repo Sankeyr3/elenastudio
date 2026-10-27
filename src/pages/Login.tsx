@@ -35,7 +35,7 @@ export function Login() {
 
   return (
     <div className="mx-auto max-w-xs px-2 pt-[15dvh]">
-      <h1 className="font-bold text-accent">estudion</h1>
+      <h1 className="font-bold text-accent">elenastudy</h1>
       <p className="mb-3 border-b border-line pb-1 text-muted">tus exámenes, sin agobios.</p>
       <form onSubmit={onSubmit} className="space-y-2" noValidate>
         <Field label="correo">

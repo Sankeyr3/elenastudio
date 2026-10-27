@@ -13,7 +13,7 @@ export const configError =
     : null
 
 /** Esquema propio de la app (permite compartir el proyecto de Supabase con otra aplicación). */
-export const DB_SCHEMA = 'estudion'
+export const DB_SCHEMA = 'elenastudy'
 
 // Solo se usa la clave pública: los datos los protegen las políticas RLS de la base de datos.
 const createRealClient = () =>

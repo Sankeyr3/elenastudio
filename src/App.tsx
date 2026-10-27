@@ -58,7 +58,7 @@ function SignedIn({ userId }: { userId: string }) {
   return (
     <div className="mx-auto max-w-3xl px-2 pb-8 sm:px-4">
       <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-x-3 border-b border-black bg-white py-1">
-        <span className="font-bold text-accent">estudion</span>
+        <span className="font-bold text-accent">elenastudy</span>
         <Button variant="ghost" className="sm:order-last" onClick={signOut}>
           salir
         </Button>

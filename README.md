@@ -1,4 +1,4 @@
-# Estudion
+# ElenaStudy
 
 Pequeña aplicación privada para que Elena apunte sus exámenes y las asignaturas que más le cuestan, y para que **tú recibas recordatorios por correo** antes de cada examen y puedas escribirle o llamarla a tiempo.
 
@@ -14,7 +14,7 @@ Tecnologías: React + TypeScript + Vite, Tailwind CSS, Supabase (base de datos y
 | Pieza | Archivo | Qué hace |
 |---|---|---|
 | Web | `src/` | Interfaz en español. Solo usa la clave **pública** de Supabase. |
-| Base de datos | `supabase/migrations/*.sql` | Tablas, permisos y políticas RLS, todo en un esquema propio `estudion` (puede compartir proyecto de Supabase con otra app). |
+| Base de datos | `supabase/migrations/*.sql` | Tablas, permisos y políticas RLS, todo en un esquema propio `elenastudy` (puede compartir proyecto de Supabase con otra app). |
 | Tarea diaria | `api/cron/reminders.ts` + `vercel.json` | Vercel la ejecuta cada día a las 07:00 UTC (08:00–09:59 en Madrid). Calcula qué avisos tocan y envía **un solo correo** con todos ellos. |
 | Reglas de avisos | `shared/reminders.ts` | Plazos, regla de asignaturas difíciles y ventanas de envío. |
 | Correo | `api/_lib/email.ts` | Asignatura, fecha, días restantes, dificultad, nota, otros exámenes próximos y enlace a la app. |
@@ -37,7 +37,7 @@ Todo funciona con planes gratuitos:
 
 | Servicio | Plan | Límites relevantes |
 |---|---|---|
-| Supabase | Free | 2 proyectos gratis (Estudion puede ir dentro de uno que ya tengas, ver paso 3). ⚠️ Los proyectos gratuitos **se pausan tras 7 días sin actividad**; la consulta diaria del cron debería mantenerlo activo, pero si ves que se pausa, reactívalo desde el panel (o pasa a Pro, de pago). |
+| Supabase | Free | 2 proyectos gratis (ElenaStudy puede ir dentro de uno que ya tengas, ver paso 3). ⚠️ Los proyectos gratuitos **se pausan tras 7 días sin actividad**; la consulta diaria del cron debería mantenerlo activo, pero si ves que se pausa, reactívalo desde el panel (o pasa a Pro, de pago). |
 | Vercel | Hobby | Solo uso personal/no comercial. Cron **una vez al día** como máximo, con precisión de ±59 min. Suficiente para avisos por días. |
 | Resend | Free | 3.000 correos/mes, 100/día. Sin dominio propio solo puedes enviarte correos **a ti mismo** (la dirección de tu cuenta de Resend). |
 | Dominio propio | Opcional, **de pago** | Solo si quieres enviar a otras direcciones o desde un remitente propio. |
@@ -86,17 +86,17 @@ npm run build      # compilación de producción (hace también el typecheck)
 
 **Opción A — reutilizar un proyecto que ya tienes** (lo normal si ya usas los 2 proyectos gratuitos):
 
-Estudion guarda todo en su propio esquema `estudion`, así que no toca las tablas de `public` de la otra aplicación. Lo que **sí se comparte** con ella:
+ElenaStudy guarda todo en su propio esquema `elenastudy`, así que no toca las tablas de `public` de la otra aplicación. Lo que **sí se comparte** con ella:
 
-- **Los usuarios** (`auth.users`): las cuentas de Elena y la tuya aparecerán junto a las de la otra app, y sus usuarios podrían iniciar sesión en Estudion. Solo verían “Tu cuenta aún no está configurada”: sin perfil en `estudion.profiles`, RLS no les deja ver ni crear nada (está probado en `tests/db.test.ts`).
+- **Los usuarios** (`auth.users`): las cuentas de Elena y la tuya aparecerán junto a las de la otra app, y sus usuarios podrían iniciar sesión en ElenaStudy. Solo verían “Tu cuenta aún no está configurada”: sin perfil en `elenastudy.profiles`, RLS no les deja ver ni crear nada (está probado en `tests/db.test.ts`).
 - **La configuración de Auth**: Site URL, plantillas de correo y si se permite el registro (ver paso 7).
 - **La clave secreta**: la `SUPABASE_SERVICE_ROLE_KEY` que pondrás en Vercel da acceso total también a los datos de la otra app. Trátala con el mismo cuidado.
-- **Los límites del plan gratuito** (500 MB de base de datos, etc.). Estudion ocupa muy poco. Como ventaja, la actividad de ambas apps evita que el proyecto se pause.
+- **Los límites del plan gratuito** (500 MB de base de datos, etc.). ElenaStudy ocupa muy poco. Como ventaja, la actividad de ambas apps evita que el proyecto se pause.
 - **Triggers sobre `auth.users`:** si la otra app crea filas automáticamente al registrarse alguien (p. ej. una función `handle_new_user`), también se ejecutará al crear las cuentas de Elena y la tuya. Normalmente no pasa nada; revísalo en *Database → Triggers* si la otra app es delicada.
 
-Antes de seguir, comprueba que el proyecto no tiene ya un esquema llamado `estudion` (*Database → Schemas*).
+Antes de seguir, comprueba que el proyecto no tiene ya un esquema llamado `elenastudy` (*Database → Schemas*).
 
-**Opción B — proyecto nuevo:** <https://supabase.com/dashboard> → **New project**, nombre `estudion`, contraseña de base de datos fuerte (la app no la necesita) y una región europea (*West EU (Ireland)* o *Central EU (Frankfurt)*).
+**Opción B — proyecto nuevo:** <https://supabase.com/dashboard> → **New project**, nombre `elenastudy`, contraseña de base de datos fuerte (la app no la necesita) y una región europea (*West EU (Ireland)* o *Central EU (Frankfurt)*).
 
 ### 4. Ejecutar la migración SQL y exponer el esquema
 
@@ -104,8 +104,8 @@ Antes de seguir, comprueba que el proyecto no tiene ya un esquema llamado `estud
 2. Abre `supabase/migrations/20261022000000_init.sql`, copia **todo** el contenido, pégalo y pulsa **Run**.
    Después, en una consulta nueva, haz lo mismo con `supabase/migrations/20261025000000_subject_color.sql` (añade el color de las asignaturas). **Si ya tenías la app instalada, ejecuta solo esta.**
    Y después, en este orden, `supabase/migrations/20261026000000_subject_icon.sql` y `supabase/migrations/20261027000000_subject_icon_colors.sql` (icono dibujado de cada asignatura, con varios colores).
-3. Debe terminar con *Success. No rows returned*. En **Table Editor**, cambiando el selector de esquema de `public` a `estudion`, verás: `profiles`, `helper_links`, `subjects`, `exams`, `reminder_settings`, `reminder_log`.
-4. **Expón el esquema en la API** (obligatorio): **Project Settings → Data API → Exposed schemas** (en algunos paneles, *Settings → API*), añade `estudion` a la lista **sin quitar los que ya hay** (la otra app los necesita) y guarda. Si te lo salta, la app mostrará “El esquema "estudion" no está expuesto…”.
+3. Debe terminar con *Success. No rows returned*. En **Table Editor**, cambiando el selector de esquema de `public` a `elenastudy`, verás: `profiles`, `helper_links`, `subjects`, `exams`, `reminder_settings`, `reminder_log`.
+4. **Expón el esquema en la API** (obligatorio): **Project Settings → Data API → Exposed schemas** (en algunos paneles, *Settings → API*), añade `elenastudy` a la lista **sin quitar los que ya hay** (la otra app los necesita) y guarda. Si te lo salta, la app mostrará “El esquema "elenastudy" no está expuesto…”.
 
 > Ejecútalo una sola vez. Si lo repites, fallará con "already exists" (es normal; no hace falta volver a ejecutarlo).
 >
@@ -129,7 +129,7 @@ En **Project Settings → API Keys** (o con el botón **Connect** arriba):
 | `SUPABASE_SERVICE_ROLE_KEY` | Solo Vercel | **Sí** | Clave secret/service_role |
 | `CRON_SECRET` | Solo Vercel | **Sí** | Cadena aleatoria de 32+ caracteres |
 | `RESEND_API_KEY` | Solo Vercel | **Sí** | API key de Resend |
-| `EMAIL_FROM` | Solo Vercel | No | `Estudion <onboarding@resend.dev>` o tu remitente verificado |
+| `EMAIL_FROM` | Solo Vercel | No | `ElenaStudy <onboarding@resend.dev>` o tu remitente verificado |
 | `APP_URL` | Solo Vercel | No | `https://<tu-proyecto>.vercel.app` (enlace del correo) |
 
 Para generar `CRON_SECRET`:
@@ -145,8 +145,8 @@ En local solo necesitas las dos `VITE_*`. El cron lee la URL de `VITE_SUPABASE_U
 En **Authentication**:
 
 1. **Sign In / Providers** (o *Providers → Email*): deja **Email** activado.
-   - Proyecto solo para Estudion: **desactiva “Allow new users to sign up”**.
-   - Proyecto compartido: déjalo como lo necesite la otra app. Aunque esté activado, Estudion no tiene pantalla de registro y una cuenta nueva no ve ningún dato hasta que la vinculas con `setup_accounts`.
+   - Proyecto solo para ElenaStudy: **desactiva “Allow new users to sign up”**.
+   - Proyecto compartido: déjalo como lo necesite la otra app. Aunque esté activado, ElenaStudy no tiene pantalla de registro y una cuenta nueva no ve ningún dato hasta que la vinculas con `setup_accounts`.
 2. **URL Configuration**:
    - **Site URL**: proyecto compartido → **no la cambies** (es la de la otra app). Proyecto nuevo → `https://<tu-proyecto>.vercel.app` (mientras tanto `http://localhost:5173`).
    - **Redirect URLs**: añade `http://localhost:5173` y `https://<tu-proyecto>.vercel.app` (sin borrar las de la otra app).
@@ -171,7 +171,7 @@ Las contraseñas las guarda Supabase cifradas (bcrypt); la app nunca las almacen
 En **SQL Editor**, sustituye los correos y nombres y ejecuta:
 
 ```sql
-select estudion.setup_accounts('correo-de-elena@ejemplo.com', 'tu-correo@ejemplo.com', 'Elena', 'Tu nombre');
+select elenastudy.setup_accounts('correo-de-elena@ejemplo.com', 'tu-correo@ejemplo.com', 'Elena', 'Tu nombre');
 ```
 
 Esto crea los perfiles (Elena = `student`, tú = `helper`), el vínculo entre ambos y tus preferencias de avisos con los plazos por defecto. Los avisos se envían al correo de tu cuenta (puedes cambiarlo en la pestaña **Avisos**). Esta función solo puede ejecutarse desde el SQL Editor; la app no tiene permiso para llamarla.
@@ -179,8 +179,8 @@ Esto crea los perfiles (Elena = `student`, tú = `helper`), el vínculo entre am
 Comprueba:
 
 ```sql
-select p.display_name, p.role, u.email from estudion.profiles p join auth.users u on u.id = p.id;
-select * from estudion.reminder_settings;
+select p.display_name, p.role, u.email from elenastudy.profiles p join auth.users u on u.id = p.id;
+select * from elenastudy.reminder_settings;
 ```
 
 Después, en `npm run dev`:
@@ -193,28 +193,28 @@ Después, en `npm run dev`:
 ```bash
 git init
 git add .
-git commit -m "Estudion: primera versión"
+git commit -m "ElenaStudy: primera versión"
 ```
 
-Crea un repositorio **privado** en <https://github.com/new> llamado `estudion` (sin README ni .gitignore) y:
+Crea un repositorio **privado** en <https://github.com/new> llamado `elenastudy` (sin README ni .gitignore) y:
 
 ```bash
 git branch -M main
-git remote add origin https://github.com/<tu-usuario>/estudion.git
+git remote add origin https://github.com/<tu-usuario>/elenastudy.git
 git push -u origin main
 ```
 
-(Opcional, con GitHub CLI: `gh repo create estudion --private --source=. --push`.)
+(Opcional, con GitHub CLI: `gh repo create elenastudy --private --source=. --push`.)
 
 Antes de subir, comprueba que `.env.local` **no** aparece en `git status` (está en `.gitignore`).
 
 ### 11. Importar en Vercel y desplegar
 
-1. <https://vercel.com/new> → **Import** el repositorio `estudion`.
+1. <https://vercel.com/new> → **Import** el repositorio `elenastudy`.
 2. Vercel detecta **Vite**. Deja: Build Command `npm run build`, Output Directory `dist`.
 3. Antes de pulsar **Deploy**, añade las variables del paso 12.
-4. **Deploy**. Al terminar tendrás una URL tipo `https://estudion-xxxx.vercel.app`.
-5. Vuelve a Supabase (paso 7) y añade esa URL en **Redirect URLs** (y como **Site URL** solo si el proyecto es exclusivo de Estudion). Ponla también en la variable `APP_URL` de Vercel.
+4. **Deploy**. Al terminar tendrás una URL tipo `https://elenastudy-xxxx.vercel.app`.
+5. Vuelve a Supabase (paso 7) y añade esa URL en **Redirect URLs** (y como **Site URL** solo si el proyecto es exclusivo de ElenaStudy). Ponla también en la variable `APP_URL` de Vercel.
 
 ### 12. Variables de entorno en Vercel
 
@@ -242,7 +242,7 @@ Ya está configurada en `vercel.json`:
 
 1. Crea una cuenta en <https://resend.com> **con el mismo correo en el que quieres recibir los avisos** (sin dominio propio, Resend solo permite enviarte correos a esa dirección).
 2. **API Keys → Create API Key** (permiso *Sending access*). Cópiala a `RESEND_API_KEY` en Vercel.
-3. `EMAIL_FROM` = `Estudion <onboarding@resend.dev>`.
+3. `EMAIL_FROM` = `ElenaStudy <onboarding@resend.dev>`.
 4. Asegúrate de que el correo de la pestaña **Avisos** de tu cuenta coincide con el de Resend.
 5. Vuelve a desplegar.
 6. Envía un **correo de prueba** (no registra ningún aviso). Desde PowerShell (usa `curl.exe`, no `curl`):
@@ -261,7 +261,7 @@ Ya está configurada en `vercel.json`:
 
 8. Prueba real: pide a Elena (o entra con su cuenta) que añada un examen para dentro de 3 días y pulsa **Run** en *Settings → Cron Jobs*. Recibirás el correo y en tu pestaña **Avisos → Historial de envíos** aparecerá como *Enviado*. Si vuelves a pulsar **Run**, no se envía otra vez.
 
-*Opcional — enviar a cualquier dirección o con remitente propio:* en Resend, **Domains → Add Domain**, añade los registros DNS que te indique en tu proveedor de dominio (de pago) y cambia `EMAIL_FROM` a algo como `Estudion <avisos@tudominio.com>`.
+*Opcional — enviar a cualquier dirección o con remitente propio:* en Resend, **Domains → Add Domain**, añade los registros DNS que te indique en tu proveedor de dominio (de pago) y cambia `EMAIL_FROM` a algo como `ElenaStudy <avisos@tudominio.com>`.
 
 > Mientras falte `RESEND_API_KEY` o `EMAIL_FROM`, los avisos **no se envían**: quedan como *Error* en el historial con el mensaje “Correo sin configurar…”, y se reintentan al día siguiente.
 
@@ -272,10 +272,10 @@ Ya está configurada en `vercel.json`:
 - Sin iniciar sesión, la API no devuelve nada. Pruébalo con la clave pública:
 
   ```powershell
-  curl.exe "https://<ref>.supabase.co/rest/v1/exams?select=*" -H "apikey: TU_CLAVE_PUBLISHABLE" -H "Accept-Profile: estudion"
+  curl.exe "https://<ref>.supabase.co/rest/v1/exams?select=*" -H "apikey: TU_CLAVE_PUBLISHABLE" -H "Accept-Profile: elenastudy"
   ```
 
-  Debe responder con un error `permission denied for schema estudion` (código `42501`), nunca con datos.
+  Debe responder con un error `permission denied for schema elenastudy` (código `42501`), nunca con datos.
 - Con tu cuenta (ayudante), no hay botones de edición, y la base de datos rechaza cualquier escritura en `subjects` y `exams`.
 - Las mismas comprobaciones están automatizadas en `tests/db.test.ts` (`npm test`): anónimo sin acceso, Elena solo con sus datos, ayudante en solo lectura, usuarios de la otra app sin acceso, sin acceso a datos no vinculados y sin duplicados en los avisos.
 - En el navegador (F12 → Sources) solo aparece la clave publishable; nunca la secreta.
@@ -290,9 +290,9 @@ Ya está configurada en `vercel.json`:
 | “Correo o contraseña incorrectos” | Revisa el correo. Si no recuerdas la contraseña, ver la fila siguiente. |
 | Elena no recibe el correo de recuperación | El SMTP integrado de Supabase solo envía a miembros del equipo. Configura SMTP propio, o cambia su contraseña desde SQL Editor: `update auth.users set encrypted_password = extensions.crypt('NUEVA_CONTRASEÑA', extensions.gen_salt('bf')) where email = 'correo-de-elena@ejemplo.com';` (escríbela directamente en el editor, no la compartas). |
 | “Tu cuenta existe pero aún no está configurada” | Falta el paso 9 (`setup_accounts`). Si es un usuario de la otra app, es lo esperado. |
-| “El esquema "estudion" no está expuesto…” (o `PGRST106` / `Invalid schema`) | Añade `estudion` en *Project Settings → Data API → Exposed schemas* (paso 4). |
-| La migración falla con `schema "estudion" already exists` | Ya existe ese esquema en el proyecto (quizá de un intento anterior). Si es de un intento anterior y está vacío, bórralo con `drop schema estudion cascade;` (⚠️ borra todo lo que contenga) y repite. |
-| Error al ejecutar `estudion.setup_accounts`: “No existe ningún usuario…” | El correo no coincide con el de *Authentication → Users*. |
+| “El esquema "elenastudy" no está expuesto…” (o `PGRST106` / `Invalid schema`) | Añade `elenastudy` en *Project Settings → Data API → Exposed schemas* (paso 4). |
+| La migración falla con `schema "elenastudy" already exists` | Ya existe ese esquema en el proyecto (quizá de un intento anterior). Si es de un intento anterior y está vacío, bórralo con `drop schema elenastudy cascade;` (⚠️ borra todo lo que contenga) y repite. |
+| Error al ejecutar `elenastudy.setup_accounts`: “No existe ningún usuario…” | El correo no coincide con el de *Authentication → Users*. |
 | “No tienes permiso para hacer esto” | Estás intentando editar con la cuenta de ayudante, o los roles se asignaron al revés: vuelve a ejecutar `setup_accounts` con los correos en el orden correcto (primero Elena). |
 | El cron responde 401 | `CRON_SECRET` en Vercel no coincide con el de tu cabecera, o no se redesplegó tras crearlo. |
 | El cron responde 500 “Faltan SUPABASE…” | Falta `SUPABASE_SERVICE_ROLE_KEY` (o la URL) en Vercel. |
@@ -323,5 +323,3 @@ vercel.json               Configuración del cron
 ## Ampliar en el futuro
 
 El esquema admite más de un ayudante por estudiante (tabla `helper_links`). Para añadir una funcionalidad, crea una nueva migración en `supabase/migrations/` en lugar de modificar la inicial.
-#   a l e r t a e s t u d i o  
- 
