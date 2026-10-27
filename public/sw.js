@@ -1,8 +1,8 @@
 // Service worker: hace la app instalable, permite que arranque sin conexión y muestra
 // las notificaciones push de los avisos (las envía api/cron/reminders.ts).
 // Los datos (Supabase, /api) siempre van a la red: solo se guarda la propia app.
-const CACHE = 'elenastudio-v1'
-const SHELL = ['/', '/favicon.ico', '/manifest.webmanifest', '/icon-192.png']
+const CACHE = 'elenastudio-v2'
+const SHELL = ['/', '/favicon.ico', '/manifest.webmanifest', '/icon-192.png', '/badge-96.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)))
@@ -70,6 +70,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title || 'ElenaStudio', {
       body: data.body || '',
       icon: '/icon-192.png',
+      // Icono pequeño de la barra de estado en Android: solo se usa la transparencia (silueta blanca).
+      badge: '/badge-96.png',
       tag: data.tag,
       renotify: Boolean(data.tag),
       data: { url: data.url || '/' },
