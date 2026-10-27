@@ -5,81 +5,75 @@ import { MOCK_USERS, resetMockData } from '../lib/mockSupabase'
 import { supabase, useMocks } from '../lib/supabase'
 
 export function Login() {
-  const [mode, setMode] = useState<'login' | 'reset'>('login')
+  const [jodes, setJodes] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(null)
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
-    setInfo(null)
-    if (!email.trim()) return setError('Escribe tu correo.')
+    const user = email.trim().toLowerCase()
+    if (!user) return setError('Escribe tu usuario.')
+    if (!password) return setError('Escribe tu contraseña.')
     setLoading(true)
-    if (mode === 'login') {
-      if (!password) {
-        setLoading(false)
-        return setError('Escribe tu contraseña.')
-      }
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
-      if (error) setError(friendlyError(error))
-    } else {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin })
-      if (error) setError(friendlyError(error))
-      else setInfo('Si el correo corresponde a una cuenta, recibirás un enlace para elegir una contraseña nueva.')
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email: useMocks || user.includes('@') ? user : `${user}@elenastudio.app`,
+      password,
+    })
+    if (error) setError(friendlyError(error))
     setLoading(false)
+  }
+
+  if (jodes) {
+    return (
+      <div className="mx-auto max-w-xs space-y-2 px-2 pt-[15dvh]">
+        <h1 className="text-2xl font-bold text-accent">pues te jodes ekisde</h1>
+        <Button type="button" variant="ghost" onClick={() => setJodes(false)}>
+          volver
+        </Button>
+      </div>
+    )
   }
 
   return (
     <div className="mx-auto max-w-xs px-2 pt-[15dvh]">
       <h1 className="font-bold text-accent">elenastudio</h1>
-      <p className="mb-3 border-b border-line pb-1 text-muted">tus exámenes, sin agobios.</p>
       <form onSubmit={onSubmit} className="space-y-2" noValidate>
-        <Field label="correo">
+        <Field label="usuario">
           {(id) => (
             <input
               id={id}
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
               className={inputClass}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           )}
         </Field>
-        {mode === 'login' && (
-          <Field label="contraseña">
-            {(id) => (
-              <input
-                id={id}
-                type="password"
-                autoComplete="current-password"
-                className={inputClass}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            )}
-          </Field>
-        )}
+        <Field label="contraseña">
+          {(id) => (
+            <input
+              id={id}
+              type="password"
+              autoComplete="current-password"
+              className={inputClass}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+        </Field>
         {error && <Alert>{error}</Alert>}
-        {info && <Alert tone="success">{info}</Alert>}
         <div className="flex flex-wrap justify-between gap-1 pt-1">
           <Button type="submit" variant="primary" loading={loading}>
-            {mode === 'login' ? 'entrar' : 'enviar enlace'}
+            entrar
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              setMode(mode === 'login' ? 'reset' : 'login')
-              setError(null)
-              setInfo(null)
-            }}
-          >
-            {mode === 'login' ? '¿olvidaste la contraseña?' : 'volver'}
+          <Button type="button" variant="ghost" onClick={() => setJodes(true)}>
+            ¿olvidaste la contraseña?
           </Button>
         </div>
       </form>
@@ -93,7 +87,6 @@ export function Login() {
           </Alert>
         </div>
       )}
-      <p className="mt-4 text-xs text-muted">aplicación privada. no hay registro público.</p>
     </div>
   )
 }
