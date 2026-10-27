@@ -59,6 +59,15 @@
   --color-on-accent: #000;
 }
 
+[data-theme='indigo'] {
+  --color-paper: #f5f4ff;
+  --color-ink: #14113d;
+  --color-muted: #5b5880;
+  --color-line: rgb(93 78 255 / 0.3);
+  --color-accent: #5d4eff;
+  --color-on-accent: #fff;
+}
+
 /* En los temas oscuros, los rojos/verdes de aviso necesitan ser más claros. */
 [data-theme='dark'],
 [data-theme='funky'],

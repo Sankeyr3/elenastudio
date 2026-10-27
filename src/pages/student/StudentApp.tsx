@@ -66,7 +66,7 @@ export function StudentApp({ profile, tab, onTab }: { profile: Profile; tab: Stu
           <p className="mb-2 text-muted">■ = cuánto te cuesta, de 1 (muy poco) a 5 (muchísimo).</p>
           {data.subjects.length === 0 ? (
             <EmptyState title="aún no hay asignaturas">
-              <p>añade las que tengas este curso, por ejemplo «historia» o «dibujo técnico».</p>
+              <p>añade las asignaturas please</p>
             </EmptyState>
           ) : (
             <ul>

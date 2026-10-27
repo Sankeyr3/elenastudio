@@ -8,7 +8,7 @@ import { IconSvg, linkClass, tapClass } from './ui'
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 /** Exámenes visibles por día; el resto se resume como «+N». */
-const MAX_CHIPS = 2
+const MAX_CHIPS = 3
 /** Meses navegables alrededor de hoy (se amplía si hay exámenes más lejos). */
 const MONTHS_BEFORE = 6
 const MONTHS_AFTER = 12
@@ -171,7 +171,7 @@ function MonthGrid({
   const leading = weekdayMondayFirst(first)
   // Siempre 6 semanas, para que el carrusel no cambie de altura entre meses.
   const trailing = 42 - leading - daysInMonth
-  const cell = 'min-h-14 min-w-0 border-r border-b border-line'
+  const cell = 'min-h-16 min-w-0 border-r border-b border-line'
 
   return (
     <section
@@ -207,6 +207,7 @@ function MonthGrid({
               <span className={`px-0.5 text-[11px] leading-4 ${isToday ? 'bg-accent font-bold text-on-accent' : isPast ? 'text-ink/30' : ''}`}>
                 {i + 1}
               </span>
+              {extra > 0 && <span className="px-0.5 text-[10px] leading-4 text-muted">+{extra}</span>}
             </span>
             {dayExams.slice(0, MAX_CHIPS).map((e) => (
               <span
@@ -217,7 +218,6 @@ function MonthGrid({
                 <span className="truncate">{e.subject.name}</span>
               </span>
             ))}
-            {extra > 0 && <span className="px-0.5 text-[10px] leading-3 text-muted">+{extra}</span>}
           </button>
         )
       })}

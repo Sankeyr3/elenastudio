@@ -1,4 +1,5 @@
-export type Liking = 'mucho' | 'regular' | 'poco'
+/** 1 = le gusta poco ... 5 = le gusta mucho (misma escala que la dificultad). */
+export type Liking = number
 
 export const DIFFICULTY_LABELS: Record<number, string> = {
   1: 'Me cuesta muy poco',
@@ -9,7 +10,7 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
 }
 
 export const LIKING_LABELS: Record<Liking, string> = {
-  mucho: 'Le gusta mucho',
-  regular: 'Le gusta regular',
-  poco: 'Le gusta poco',
+  1: 'Le gusta poco',
+  3: 'Le gusta sin más',
+  5: 'Le gusta mucho',
 }

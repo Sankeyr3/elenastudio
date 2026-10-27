@@ -1,4 +1,4 @@
-export const THEMES = ['light', 'dark', 'funky', 'twilight', 'solarized', 'night'] as const
+export const THEMES = ['light', 'dark', 'funky', 'twilight', 'solarized', 'night', 'indigo'] as const
 export type Theme = (typeof THEMES)[number]
 
 const KEY = 'theme'

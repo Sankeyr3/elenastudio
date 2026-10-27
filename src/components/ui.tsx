@@ -215,7 +215,9 @@ export function SubjectDot({ subject, className = '' }: { subject: Pick<Subject,
 
 export function LikingText({ liking }: { liking: Liking | null }) {
   if (!liking) return null
-  return <span className="text-muted">{LIKING_LABELS[liking].toLowerCase()}</span>
+  const label = LIKING_LABELS[liking]
+  if (!label) return null
+  return <span className="text-muted">{label.toLowerCase()}</span>
 }
 
 export function Tabs<T extends string>({

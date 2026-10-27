@@ -123,8 +123,8 @@ beforeEach(() => {
   vi.stubEnv('APP_URL', 'https://elenastudio.vercel.app')
   state.logs = []
   state.exams = [
-    { id: 'e1', student_id: STUDENT, exam_date: '2026-10-29', exam_time: '09:00:00', note: 'Tema 3', subject: { name: 'Historia', difficulty: 5, liking: 'poco' } },
-    { id: 'e2', student_id: STUDENT, exam_date: '2026-10-29', exam_time: null, note: null, subject: { name: 'Dibujo técnico', difficulty: 1, liking: 'mucho' } },
+    { id: 'e1', student_id: STUDENT, exam_date: '2026-10-29', exam_time: '09:00:00', note: 'Tema 3', subject: { name: 'Historia', difficulty: 5, liking: 1 } },
+    { id: 'e2', student_id: STUDENT, exam_date: '2026-10-29', exam_time: null, note: null, subject: { name: 'Dibujo técnico', difficulty: 1, liking: 5 } },
     { id: 'e3', student_id: STUDENT, exam_date: '2026-12-20', exam_time: null, note: null, subject: { name: 'Inglés', difficulty: 2, liking: null } },
   ]
   state.subscriptions = [

@@ -64,6 +64,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('supabase/migrations/20261026000000_subject_icon.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261027000000_subject_icon_colors.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261028000000_push_notifications.sql', 'utf8'))
+  await db.exec(readFileSync('supabase/migrations/20261029000000_liking_int.sql', 'utf8'))
   await db.query(`select elenastudio.setup_accounts('elena@example.org', 'YO@example.org', 'Elena', 'David')`)
 })
 
@@ -92,7 +93,7 @@ describe('Elena (estudiante)', () => {
     const rows = await as<{ id: string }>(
       ELENA,
       `insert into elenastudio.subjects (name, difficulty, liking) values
-         ('Historia', 5, 'poco'), ('Dibujo técnico', 1, 'mucho') returning id`,
+         ('Historia', 5, 1), ('Dibujo técnico', 1, 5) returning id`,
     )
     ;[historyId, drawingId] = rows.map((r) => r.id)
     expect(rows).toHaveLength(2)

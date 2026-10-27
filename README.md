@@ -102,7 +102,7 @@ Antes de seguir, comprueba que el proyecto no tiene ya un esquema llamado `elena
 1. En el proyecto: **SQL Editor** → **New query**.
 2. Abre `supabase/migrations/20261022000000_init.sql`, copia **todo** el contenido, pégalo y pulsa **Run**.
    Después, en una consulta nueva, haz lo mismo con `supabase/migrations/20261025000000_subject_color.sql` (añade el color de las asignaturas). **Si ya tenías la app instalada, ejecuta solo esta.**
-   Y después, en este orden, `supabase/migrations/20261026000000_subject_icon.sql` y `supabase/migrations/20261027000000_subject_icon_colors.sql` (icono dibujado de cada asignatura, con varios colores) y `supabase/migrations/20261028000000_push_notifications.sql` (avisos por notificación push en lugar de correo).
+   Y después, en este orden, `supabase/migrations/20261026000000_subject_icon.sql`, `supabase/migrations/20261027000000_subject_icon_colors.sql` (icono dibujado de cada asignatura, con varios colores), `supabase/migrations/20261028000000_push_notifications.sql` (avisos por notificación push en lugar de correo) y `supabase/migrations/20261029000000_liking_int.sql` («¿te gusta?» pasa a número 1–5).
 3. Debe terminar con *Success. No rows returned*. En **Table Editor**, cambiando el selector de esquema de `public` a `elenastudio`, verás: `profiles`, `helper_links`, `subjects`, `exams`, `reminder_settings`, `reminder_log`, `push_subscriptions`.
 4. **Expón el esquema en la API** (obligatorio): **Project Settings → Data API → Exposed schemas** (en algunos paneles, *Settings → API*), añade `elenastudio` a la lista **sin quitar los que ya hay** (la otra app los necesita) y guarda. Si te lo salta, la app mostrará “El esquema "elenastudio" no está expuesto…”.
 

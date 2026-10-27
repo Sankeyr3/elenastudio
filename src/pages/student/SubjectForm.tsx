@@ -10,9 +10,9 @@ import type { Subject } from '../../lib/types'
 import { MAX_SUBJECT_NAME, validateSubjectName } from '../../lib/validation'
 
 const LIKING_OPTIONS: { value: Liking | null; label: string }[] = [
-  { value: 'mucho', label: 'Mucho' },
-  { value: 'regular', label: 'Regular' },
-  { value: 'poco', label: 'Poco' },
+  { value: 5, label: 'Mucho' },
+  { value: 3, label: 'Sin más' },
+  { value: 1, label: 'Poco' },
   { value: null, label: 'Sin indicar' },
 ]
 
@@ -92,7 +92,6 @@ export function SubjectForm({
               aria-invalid={Boolean(nameError)}
               value={name}
               maxLength={MAX_SUBJECT_NAME}
-              placeholder="historia"
               autoFocus={!subject}
               onChange={(e) => {
                 setName(e.target.value)

@@ -12,7 +12,7 @@ type Tables = Record<string, Row[]>
 type Result = { data: unknown; error: { message: string; code?: string } | null; count?: null }
 type AuthEvent = 'INITIAL_SESSION' | 'SIGNED_IN' | 'SIGNED_OUT' | 'USER_UPDATED'
 
-const STORAGE_KEY = 'elenastudio-mock-v1'
+const STORAGE_KEY = 'elenastudio-mock-v2'
 const DELAY_MS = 150
 
 const STUDENT_ID = '00000000-0000-0000-0000-000000000001'
@@ -27,9 +27,9 @@ export const MOCK_USERS = [
 function seed(): Tables {
   const today = todayInMadrid()
   const subjects = [
-    { id: 's-mat', student_id: STUDENT_ID, name: 'Matemáticas', difficulty: 5, liking: 'poco', color: 'rose', icon: 'M15 30L85 30M35 30L28 82M65 30L65 76L78 82' },
-    { id: 's-his', student_id: STUDENT_ID, name: 'Historia', difficulty: 3, liking: 'mucho', color: 'amber', icon: 'M25 12L75 12L50 50L75 88L25 88L50 50L25 12' },
-    { id: 's-ing', student_id: STUDENT_ID, name: 'Inglés', difficulty: 2, liking: 'regular', color: 'sky', icon: null },
+    { id: 's-mat', student_id: STUDENT_ID, name: 'Matemáticas', difficulty: 5, liking: 1, color: 'rose', icon: 'M15 30L85 30M35 30L28 82M65 30L65 76L78 82' },
+    { id: 's-his', student_id: STUDENT_ID, name: 'Historia', difficulty: 3, liking: 5, color: 'amber', icon: 'M25 12L75 12L50 50L75 88L25 88L50 50L25 12' },
+    { id: 's-ing', student_id: STUDENT_ID, name: 'Inglés', difficulty: 2, liking: 3, color: 'sky', icon: null },
     { id: 's-fis', student_id: STUDENT_ID, name: 'Física', difficulty: 4, liking: null, color: 'violet', icon: 'M15 50L30 35L50 30L70 35L85 50L70 65L50 70L30 65L15 50#0ea5e9M50 15L65 30L70 50L65 70L50 85L35 70L30 50L35 30L50 15#000000M50 50L50 50' },
   ]
   const exam = (id: string, subject_id: string, days: number, exam_time: string | null, note: string | null) => ({
