@@ -116,11 +116,11 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
         </label>
       </div>
 
-      <div className="flex flex-wrap items-start gap-3">
+      <div className="flex items-start justify-between gap-3 sm:justify-start">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${ICON_SIZE} ${ICON_SIZE}`}
-          className={`h-48 w-48 shrink-0 cursor-crosshair touch-none border border-line bg-paper select-none sm:h-36 sm:w-36 ${colorClass}`}
+          className={`aspect-square w-[min(60vw,30dvh)] shrink-0 cursor-crosshair touch-none border border-line bg-paper select-none sm:h-36 sm:w-36 ${colorClass}`}
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}
@@ -132,12 +132,12 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
           <path d="M50 0V100M0 50H100" stroke="black" strokeOpacity={0.08} strokeDasharray="2 3" />
           <IconSvg icon={icon} />
         </svg>
-        <div className="space-y-1">
+        <div className="flex flex-col items-end gap-2 sm:items-start sm:gap-1">
           <div className={`flex items-end gap-2 ${colorClass}`} aria-label="Vista previa">
             <IconSvg icon={icon} className="h-4 w-4" />
             <IconSvg icon={icon} className="h-8 w-8" />
           </div>
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-col items-end gap-2 sm:items-start sm:gap-1">
             <Button type="button" disabled={!strokes.length} onClick={() => update(strokes.slice(0, -1))}>
               deshacer
             </Button>

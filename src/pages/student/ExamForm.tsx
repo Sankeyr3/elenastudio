@@ -34,13 +34,12 @@ export function ExamForm({
   const [deleting, setDeleting] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
-  const [savedMessage, setSavedMessage] = useState<string | null>(null)
   const [showNote, setShowNote] = useState(Boolean(exam?.note))
   const [addingSubject, setAddingSubject] = useState(false)
 
   const set = (patch: Partial<ExamInput>) => setValues((v) => ({ ...v, ...patch }))
 
-  async function save(addAnother: boolean) {
+  async function save() {
     const found = validateExam(values, today, exam?.exam_date)
     setErrors(found)
     if (Object.keys(found).length) return
@@ -58,15 +57,7 @@ export function ExamForm({
     setSaving(false)
     if (error) return setServerError(friendlyError(error))
     await onSaved()
-    if (addAnother) {
-      const subject = subjects.find((s) => s.id === values.subject_id)
-      setSavedMessage(`Guardado: ${subject?.name} el ${formatDate(values.exam_date)}. Añade el siguiente.`)
-      // Se mantiene la fecha para registrar rápido varios exámenes el mismo día.
-      setValues((v) => ({ ...v, subject_id: '', exam_time: '', note: '' }))
-      setShowNote(false)
-    } else {
-      onClose()
-    }
+    onClose()
   }
 
   async function remove() {
@@ -81,7 +72,7 @@ export function ExamForm({
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
-    void save(false)
+    void save()
   }
 
   const quickDates = [
@@ -109,8 +100,6 @@ export function ExamForm({
   return (
     <Modal title={exam ? 'editar examen' : 'nuevo examen'} onClose={onClose}>
       <form onSubmit={onSubmit} className="space-y-3" noValidate>
-        {savedMessage && <Alert tone="success">{savedMessage}</Alert>}
-
         {/* Lista compacta en rejilla: se lee mejor que muchas etiquetas [..] sueltas. */}
         <div className="space-y-0.5">
           <div className="flex items-center justify-between">
@@ -156,7 +145,7 @@ export function ExamForm({
               />
             )}
           </Field>
-          <Field label="hora" error={errors.exam_time}>
+          {/* <Field label="hora (opcional)" error={errors.exam_time}>
             {(id) => (
               <input
                 id={id}
@@ -166,7 +155,7 @@ export function ExamForm({
                 onChange={(e) => set({ exam_time: e.target.value })}
               />
             )}
-          </Field>
+          </Field> */}
         </div>
 
         <div className="-mt-2 flex items-center gap-2 text-xs text-muted">
@@ -227,8 +216,8 @@ export function ExamForm({
                 eliminar
               </Button>
             ) : (
-              <Button type="button" variant="ghost" disabled={saving} onClick={() => save(true)}>
-                guardar y añadir otro
+              <Button type="button" variant="ghost" disabled={saving} onClick={onClose}>
+                cancelar
               </Button>
             )}
             <Button type="submit" variant="primary" loading={saving} className="ml-auto">
