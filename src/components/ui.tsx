@@ -179,9 +179,6 @@ export function DifficultyBadge({ difficulty }: { difficulty: number }) {
   )
 }
 
-/** Grosor del trazo de los iconos, en unidades de la cuadrícula 0–100. */
-export const ICON_STROKE = 8
-
 /** Dibuja un icono a mano alzada. Los trazos sin color propio usan el color de texto actual (el de la asignatura). */
 export function IconSvg({ icon, className = '' }: { icon: string; className?: string }) {
   return (
@@ -192,7 +189,7 @@ export function IconSvg({ icon, className = '' }: { icon: string; className?: st
           d={run.d}
           fill="none"
           stroke={run.color ?? 'currentColor'}
-          strokeWidth={ICON_STROKE}
+          strokeWidth={run.width}
           strokeLinecap="round"
           strokeLinejoin="round"
         />

@@ -1,5 +1,5 @@
 import { useRef, useState, type PointerEvent } from 'react'
-import { ICON_SIZE, isHexColor, MAX_ICON_LENGTH, parseIcon, serializeIcon, type Point, type Stroke } from '../../shared/icon'
+import { DEFAULT_ICON_WIDTH, ICON_SIZE, isHexColor, MAX_ICON_LENGTH, parseIcon, serializeIcon, type Point, type Stroke } from '../../shared/icon'
 import { Button, IconSvg } from './ui'
 
 /** Puntos más cercanos que esto (en unidades de la cuadrícula 0–100) se descartan: menos datos, trazo igual. */
@@ -23,6 +23,9 @@ const INKS = [
   '#ec4899',
 ]
 
+/** Grosores de pincel, en unidades de la cuadrícula 0–100. */
+const WIDTHS = [3, 5, DEFAULT_ICON_WIDTH, 12, 18]
+
 /**
  * Lienzo para dibujar el icono de una asignatura con el dedo, el lápiz o el ratón.
  * `colorClass` es la clase de texto del color de la asignatura: la tinta «asignatura» la sigue aunque se cambie después.
@@ -31,6 +34,7 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
   const [strokes, setStrokes] = useState<Stroke[]>(() => parseIcon(value))
   const [ink, setInk] = useState<string | null>(null)
   const [custom, setCustom] = useState('#ff6600')
+  const [width, setWidth] = useState(DEFAULT_ICON_WIDTH)
   const drawing = useRef(false)
   const svgRef = useRef<SVGSVGElement>(null)
   const icon = serializeIcon(strokes)
@@ -50,7 +54,7 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
     if (full) return
     e.currentTarget.setPointerCapture(e.pointerId)
     drawing.current = true
-    update([...strokes, { color: ink, points: [toPoint(e)] }])
+    update([...strokes, { color: ink, width, points: [toPoint(e)] }])
   }
 
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
@@ -114,6 +118,24 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
             }}
           />
         </label>
+      </div>
+
+      <div className="flex flex-wrap gap-2 desk:gap-1.5" role="radiogroup" aria-label="Grosor">
+        {WIDTHS.map((w) => (
+          <button
+            key={w}
+            type="button"
+            role="radio"
+            aria-checked={width === w}
+            aria-label={`Grosor ${w}`}
+            title={`Grosor ${w}`}
+            onClick={() => setWidth(w)}
+            className={`${swatch(width === w)} flex items-center justify-center bg-paper ${ink === null ? colorClass : ''}`}
+          >
+            {/* El punto ocupa en el botón la misma proporción que el trazo en el lienzo. */}
+            <span className="rounded-full bg-current" style={{ width: `${w * 1.6}%`, height: `${w * 1.6}%`, color: ink ?? undefined }} />
+          </button>
+        ))}
       </div>
 
       <div className="flex items-start justify-between gap-3 sm:justify-start">

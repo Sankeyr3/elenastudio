@@ -65,6 +65,7 @@ beforeAll(async () => {
   await db.exec(readFileSync('supabase/migrations/20261027000000_subject_icon_colors.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261028000000_push_notifications.sql', 'utf8'))
   await db.exec(readFileSync('supabase/migrations/20261029000000_liking_int.sql', 'utf8'))
+  await db.exec(readFileSync('supabase/migrations/20261030000000_subject_icon_widths.sql', 'utf8'))
   await db.query(`select elenastudio.setup_accounts('elena@example.org', 'YO@example.org', 'Elena', 'David')`)
 })
 
@@ -116,7 +117,7 @@ describe('Elena (estudiante)', () => {
       historyId,
     ])
     expect(updated).toEqual([{ icon: 'M10 20L30 40M50 50L50 50' }])
-    const multicolor = '#e11d48M10 20L30 40#000000M50 50L50 50cM1 1L2 2'
+    const multicolor = '#e11d48M10 20L30 40#000000w4M50 50L50 50cw16M1 1L2 2'
     const colored = await as(ELENA, `update elenastudio.subjects set icon = $2 where id = $1 returning icon`, [historyId, multicolor])
     expect(colored).toEqual([{ icon: multicolor }])
     await expect(
