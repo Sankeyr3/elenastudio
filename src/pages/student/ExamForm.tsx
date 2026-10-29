@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react'
-import { addDays, formatDate, isValidIsoDate, weekdayName } from '../../../shared/dates'
 import { Alert, Button, Field, Modal, SubjectDot, inputClass, linkClass } from '../../components/ui'
 import { friendlyError } from '../../lib/errors'
 import { supabase } from '../../lib/supabase'
@@ -74,12 +73,6 @@ export function ExamForm({
     e.preventDefault()
     void save()
   }
-
-  const quickDates = [
-    { label: 'mañana', date: addDays(today, 1) },
-    { label: '+1 sem', date: addDays(today, 7) },
-    { label: '+2 sem', date: addDays(today, 14) },
-  ]
 
   // Se sustituye el modal (en vez de apilarlo) para que Escape no cierre ambos; el estado del examen se conserva.
   if (addingSubject) {
@@ -156,24 +149,6 @@ export function ExamForm({
               />
             )}
           </Field> */}
-        </div>
-
-        <div className="-mt-2 flex items-center gap-2 text-xs text-muted">
-          {quickDates.map((q) => (
-            <button
-              key={q.label}
-              type="button"
-              onClick={() => set({ exam_date: q.date })}
-              className={`min-h-9 desk:min-h-0 ${values.exam_date === q.date ? 'text-ink underline' : linkClass}`}
-            >
-              {q.label}
-            </button>
-          ))}
-          {isValidIsoDate(values.exam_date) && (
-            <span className="ml-auto text-ink">
-              {weekdayName(values.exam_date)} {formatDate(values.exam_date)}
-            </span>
-          )}
         </div>
 
         {showNote ? (
