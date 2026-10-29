@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Escritorio con ratón: ancho de tablet o más Y puntero fino. Un iPad (táctil) no entra, así que conserva los tamaños grandes de móvil. */
+@custom-variant desk (@media (width >= 40rem) and (pointer: fine));
+
 @theme {
   --font-mono: "Source Code Pro", "Courier New", Consolas, "Liberation Mono", Menlo, monospace;
   /* Papel (fondo) y tinta (texto); cambian con el tema. */
@@ -84,7 +87,7 @@ html {
 }
 
 body {
-  @apply bg-paper font-mono text-[15px] leading-snug text-ink sm:text-[13px];
+  @apply bg-paper font-mono text-[15px] leading-snug text-ink desk:text-[13px];
 }
 
 ::selection {

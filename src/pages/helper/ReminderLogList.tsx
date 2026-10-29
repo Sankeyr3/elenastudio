@@ -24,7 +24,7 @@ export function ReminderLogList({ logs, empty }: { logs: ReminderLog[]; empty: s
   return (
     <ul>
       {logs.map((log) => (
-        <li key={log.id} className="border-b border-dashed border-line px-1 py-1.5 sm:py-0.5">
+        <li key={log.id} className="border-b border-dashed border-line px-1 py-1.5 desk:py-0.5">
           <div className="flex items-baseline gap-2">
             <span className={`w-16 shrink-0 ${STATUS[log.status].className}`}>[{STATUS[log.status].label}]</span>
             <span className="min-w-0 flex-1">

@@ -104,7 +104,7 @@ export function ExamForm({
         <div className="space-y-0.5">
           <div className="flex items-center justify-between">
             <span>asignatura</span>
-            <button type="button" onClick={() => setAddingSubject(true)} className={`min-h-9 text-muted sm:min-h-0 ${linkClass}`}>
+            <button type="button" onClick={() => setAddingSubject(true)} className={`min-h-9 text-muted desk:min-h-0 ${linkClass}`}>
               + nueva asignatura
             </button>
           </div>
@@ -118,7 +118,7 @@ export function ExamForm({
                   role="radio"
                   aria-checked={active}
                   onClick={() => set({ subject_id: s.id })}
-                  className={`flex min-h-11 min-w-0 items-center gap-1 border-r border-b border-line px-1 text-left sm:min-h-8 ${
+                  className={`flex min-h-11 min-w-0 items-center gap-1 border-r border-b border-line px-1 text-left desk:min-h-8 ${
                     active ? 'bg-ink text-paper' : linkClass
                   }`}
                 >
@@ -164,7 +164,7 @@ export function ExamForm({
               key={q.label}
               type="button"
               onClick={() => set({ exam_date: q.date })}
-              className={`min-h-9 sm:min-h-0 ${values.exam_date === q.date ? 'text-ink underline' : linkClass}`}
+              className={`min-h-9 desk:min-h-0 ${values.exam_date === q.date ? 'text-ink underline' : linkClass}`}
             >
               {q.label}
             </button>
@@ -192,7 +192,7 @@ export function ExamForm({
             )}
           </Field>
         ) : (
-          <button type="button" onClick={() => setShowNote(true)} className={`min-h-9 text-muted sm:min-h-0 ${linkClass}`}>
+          <button type="button" onClick={() => setShowNote(true)} className={`min-h-9 text-muted desk:min-h-0 ${linkClass}`}>
             + añadir nota
           </button>
         )}

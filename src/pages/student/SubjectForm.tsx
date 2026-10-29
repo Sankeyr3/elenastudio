@@ -138,7 +138,7 @@ export function SubjectForm({
 
         <div className="space-y-0.5">
           <span className="block">color</span>
-          <div className="flex flex-wrap gap-2 sm:gap-1.5" role="radiogroup" aria-label="Color">
+          <div className="flex flex-wrap gap-2 desk:gap-1.5" role="radiogroup" aria-label="Color">
             {SUBJECT_COLORS.map((c) => (
               <button
                 key={c}
@@ -148,7 +148,7 @@ export function SubjectForm({
                 aria-label={SUBJECT_COLOR_LABELS[c]}
                 title={SUBJECT_COLOR_LABELS[c]}
                 onClick={() => setColor(c)}
-                className={`h-10 w-10 sm:h-5 sm:w-5 ${COLOR_CLASSES[c].dot} ${color === c ? 'outline-2 outline-offset-2 outline-ink' : 'hover:opacity-70'}`}
+                className={`h-10 w-10 desk:h-5 desk:w-5 ${COLOR_CLASSES[c].dot} ${color === c ? 'outline-2 outline-offset-2 outline-ink' : 'hover:opacity-70'}`}
               />
             ))}
           </div>

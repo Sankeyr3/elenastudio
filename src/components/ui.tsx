@@ -16,7 +16,7 @@ const VARIANTS: Record<Variant, string> = {
 }
 
 /** Zona táctil: en móvil, al menos 44px de alto; en escritorio, compacto. */
-export const tapClass = 'inline-flex min-h-11 items-center justify-center px-2 sm:min-h-0 sm:px-0.5'
+export const tapClass = 'inline-flex min-h-11 items-center justify-center px-2 desk:min-h-0 desk:px-0.5'
 
 /** Estilo común de todo lo pulsable: texto plano que se invierte al pasar el ratón. */
 export const linkClass =
@@ -133,7 +133,7 @@ export function Field({
 
 // 16px en móvil para que iOS no haga zoom al enfocar.
 export const inputClass =
-  'block w-full rounded-none border border-line bg-paper px-1.5 py-2.5 text-[16px] sm:py-1 placeholder:text-muted focus:border-accent focus:outline-none sm:text-[13px]'
+  'block w-full rounded-none border border-line bg-paper px-1.5 py-2.5 text-[16px] desk:py-1 placeholder:text-muted focus:border-accent focus:outline-none desk:text-[13px]'
 
 export function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   useEffect(() => {
@@ -158,13 +158,13 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         aria-label={title}
         className="max-h-[92dvh] w-full overflow-y-auto border-t border-ink bg-paper pb-[env(safe-area-inset-bottom)] sm:max-h-[85dvh] sm:max-w-md sm:border"
       >
-        <div className="sticky top-0 flex items-center justify-between bg-ink pl-2 text-paper sm:py-0.5">
+        <div className="sticky top-0 flex items-center justify-between bg-ink pl-2 text-paper desk:py-0.5">
           <h2 className="font-bold">{title}</h2>
           <button onClick={onClose} className={`${tapClass} hover:bg-paper hover:text-ink`} aria-label="Cerrar">
             [x]
           </button>
         </div>
-        <div className="p-3 sm:p-2">{children}</div>
+        <div className="p-3 desk:p-2">{children}</div>
       </div>
     </div>
   )

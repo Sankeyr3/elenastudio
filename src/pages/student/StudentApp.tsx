@@ -76,7 +76,7 @@ export function StudentApp({ profile, tab, onTab }: { profile: Profile; tab: Stu
                   <li key={s.id}>
                     <button
                       onClick={() => setSubjectForm({ subject: s })}
-                      className="flex w-full items-center gap-2 border-b border-dashed border-line px-1 py-3 text-left hover:bg-ink/5 sm:py-0.5"
+                      className="flex w-full items-center gap-2 border-b border-dashed border-line px-1 py-3 text-left hover:bg-ink/5 desk:py-0.5"
                     >
                       <SubjectDot subject={s} />
                       <span className="min-w-0 flex-1 truncate font-bold">{s.name}</span>

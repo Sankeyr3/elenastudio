@@ -67,11 +67,11 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
   }
 
   const swatch = (active: boolean) =>
-    `h-9 w-9 shrink-0 border border-line sm:h-6 sm:w-6 ${active ? 'outline-2 outline-offset-2 outline-ink' : 'hover:opacity-70'}`
+    `h-9 w-9 shrink-0 border border-line desk:h-6 desk:w-6 ${active ? 'outline-2 outline-offset-2 outline-ink' : 'hover:opacity-70'}`
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap gap-2 sm:gap-1.5" role="radiogroup" aria-label="Tinta">
+      <div className="flex flex-wrap gap-2 desk:gap-1.5" role="radiogroup" aria-label="Tinta">
         <button
           type="button"
           role="radio"
@@ -132,12 +132,12 @@ export function IconPad({ value, onChange, colorClass }: { value: string; onChan
           <path d="M50 0V100M0 50H100" stroke="black" strokeOpacity={0.08} strokeDasharray="2 3" />
           <IconSvg icon={icon} />
         </svg>
-        <div className="flex flex-col items-end gap-2 sm:items-start sm:gap-1">
+        <div className="flex flex-col items-end gap-2 sm:items-start desk:gap-1">
           <div className={`flex items-end gap-2 ${colorClass}`} aria-label="Vista previa">
             <IconSvg icon={icon} className="h-4 w-4" />
             <IconSvg icon={icon} className="h-8 w-8" />
           </div>
-          <div className="flex flex-col items-end gap-2 sm:items-start sm:gap-1">
+          <div className="flex flex-col items-end gap-2 sm:items-start desk:gap-1">
             <Button type="button" disabled={!strokes.length} onClick={() => update(strokes.slice(0, -1))}>
               deshacer
             </Button>
