@@ -67,7 +67,7 @@ export function SettingsForm({
       <label className="flex min-h-11 items-center gap-2 desk:min-h-0">
         <input type="checkbox" className="h-6 w-6 shrink-0 accent-accent desk:h-4 desk:w-4" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
         <span>
-          avisos por notificación <span className="text-muted">(se revisan una vez al día, por la mañana)</span>
+          avisos por notificación <span className="text-muted">(se revisan una vez al día, por la tarde)</span>
         </span>
       </label>
 

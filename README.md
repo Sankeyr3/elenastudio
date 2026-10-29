@@ -15,7 +15,7 @@ Tecnologías: React + TypeScript + Vite, Tailwind CSS, Supabase (base de datos y
 |---|---|---|
 | Web | `src/` | Interfaz en español. Solo usa la clave **pública** de Supabase. |
 | Base de datos | `supabase/migrations/*.sql` | Tablas, permisos y políticas RLS, todo en un esquema propio `elenastudio` (puede compartir proyecto de Supabase con otra app). |
-| Tarea diaria | `api/cron/reminders.ts` + `vercel.json` | Vercel la ejecuta cada día a las 07:00 UTC (08:00–09:59 en Madrid). Calcula qué avisos tocan y envía **una sola notificación** con todos ellos a tus móviles. |
+| Tarea diaria | `api/cron/reminders.ts` + `vercel.json` | Vercel la ejecuta cada día a las 16:00 UTC (17:00–18:59 en Madrid). Calcula qué avisos tocan y envía **una sola notificación** con todos ellos a tus móviles. |
 | Reglas de avisos | `shared/reminders.ts` | Plazos, regla de asignaturas difíciles y ventanas de envío. |
 | Notificación | `api/_lib/notification.ts`, `api/_lib/push.ts`, `public/sw.js` | Asignatura, fecha, días restantes, dificultad y nota. Al tocarla se abre la app. |
 
@@ -228,10 +228,10 @@ Antes de subir, comprueba que `.env.local` **no** aparece en `git status` (está
 Ya está configurada en `vercel.json`:
 
 ```json
-"crons": [{ "path": "/api/cron/reminders", "schedule": "0 7 * * *" }]
+"crons": [{ "path": "/api/cron/reminders", "schedule": "0 16 * * *" }]
 ```
 
-- Se ejecuta a diario a las 07:00 UTC, es decir, entre las **08:00 y 08:59 en invierno** y **09:00 y 09:59 en verano** (hora de Madrid; en el plan Hobby la hora exacta varía dentro de esa hora).
+- Se ejecuta a diario a las 16:00 UTC, es decir, entre las **17:00 y 17:59 en invierno** y **18:00 y 18:59 en verano** (hora de Madrid; en el plan Hobby la hora exacta varía dentro de esa hora).
 - Solo se ejecuta en el despliegue de **producción**.
 - Compruébalo en **Project → Settings → Cron Jobs**: verás `/api/cron/reminders`. Desde ahí puedes pulsar **Run** para lanzarlo a mano y **View Logs** para ver el resultado.
 - Vercel envía automáticamente `Authorization: Bearer <CRON_SECRET>`. Sin `CRON_SECRET` el endpoint responde 500 y no hace nada; con una cabecera incorrecta, 401.
@@ -286,7 +286,7 @@ Ya está configurada en `vercel.json`:
 - Las mismas comprobaciones están automatizadas en `tests/db.test.ts` (`npm test`): anónimo sin acceso, Elena solo con sus datos, ayudante en solo lectura, usuarios de la otra app sin acceso, sin acceso a datos no vinculados y sin duplicados en los avisos.
 - En el navegador (F12 → Sources) solo aparece la clave publishable; nunca la secreta.
 
-**Recordatorios sin la web abierta:** el envío lo hace el servidor de Vercel cada mañana. No depende de que Elena ni tú tengáis la app abierta. Para comprobarlo, cierra todas las pestañas, pulsa **Run** en *Settings → Cron Jobs* (o espera al día siguiente) y revisa **View Logs** y tu móvil.
+**Recordatorios sin la web abierta:** el envío lo hace el servidor de Vercel cada tarde. No depende de que Elena ni tú tengáis la app abierta. Para comprobarlo, cierra todas las pestañas, pulsa **Run** en *Settings → Cron Jobs* (o espera al día siguiente) y revisa **View Logs** y tu móvil.
 
 ### 16. Errores habituales
 

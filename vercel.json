@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "crons": [{ "path": "/api/cron/reminders", "schedule": "0 7 * * *" }]
+  "crons": [{ "path": "/api/cron/reminders", "schedule": "0 16 * * *" }]
 }

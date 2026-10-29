@@ -170,7 +170,7 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
             ) : (
               <p className="text-muted">no hay recordatorios programados.</p>
             )}
-            <p className="mt-1 text-xs text-muted">se envían una vez al día, por la mañana (hora de madrid).</p>
+            <p className="mt-1 text-xs text-muted">se envían una vez al día, por la tarde (hacia las 17:00, hora de madrid).</p>
           </section>
 
           <section>
