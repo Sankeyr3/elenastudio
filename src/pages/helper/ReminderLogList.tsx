@@ -27,7 +27,7 @@ export function ReminderLogList({ logs, empty }: { logs: ReminderLog[]; empty: s
         <li key={log.id} className="border-b border-dashed border-line px-1 py-1.5 desk:py-0.5">
           <div className="flex items-baseline gap-2">
             <span className={`w-16 shrink-0 ${STATUS[log.status].className}`}>[{STATUS[log.status].label}]</span>
-            <span className="min-w-0 flex-1">
+            <span className="min-w-0 flex-1 break-words">
               {log.subject_name}{' '}
               <span className="text-muted">
                 examen {formatDate(log.exam_date)} · -{log.offset_days}d
@@ -37,7 +37,7 @@ export function ReminderLogList({ logs, empty }: { logs: ReminderLog[]; empty: s
             </span>
             <span className="hidden shrink-0 text-muted sm:inline">{formatDateTime(log.sent_at ?? log.created_at)}</span>
           </div>
-          {log.status === 'failed' && log.last_error && <p className="pl-[4.5rem] text-xs text-red-700">{log.last_error}</p>}
+          {log.status === 'failed' && log.last_error && <p className="pl-[4.5rem] text-xs break-words text-red-700">{log.last_error}</p>}
         </li>
       ))}
     </ul>

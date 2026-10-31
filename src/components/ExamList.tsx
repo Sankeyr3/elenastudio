@@ -38,7 +38,7 @@ export function ExamList({
                       {exam.exam_time && <span>{formatTime(exam.exam_time)}</span>}
                       <DifficultyBadge difficulty={exam.subject.difficulty} />
                     </span>
-                    {exam.note && <span className="block pl-4 whitespace-pre-line text-muted">{exam.note}</span>}
+                    {exam.note && <span className="block pl-4 break-words whitespace-pre-line text-muted">{exam.note}</span>}
                   </>
                 )
                 return (

@@ -203,7 +203,7 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
         </p>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <section>
           <Heading>requieren atención</Heading>
           <p className="mb-1 text-xs text-muted">en 3 días o menos, o difíciles (4–5) en 14 días o menos.</p>
