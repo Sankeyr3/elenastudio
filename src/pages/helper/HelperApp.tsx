@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { daysBetween, formatDate } from '../../../shared/dates'
-import { needsAttention, nextReminder, offsetsForExam, type PlannedReminder } from '../../../shared/reminders'
+import { daysBetween, formatDate, formatTime, relativeDays } from '../../../shared/dates'
+import {
+  DEFAULT_HARD_EXTRA_DAYS,
+  DEFAULT_OFFSETS,
+  needsAttention,
+  nextReminder,
+  offsetsForExam,
+  shouldStudyToday,
+  type PlannedReminder,
+} from '../../../shared/reminders'
 import { ExamList } from '../../components/ExamList'
 import { ExamsBrowser } from '../../components/ExamsBrowser'
 import { Alert, DifficultyBadge, EmptyState, Heading, LikingText, Loading, SubjectDot } from '../../components/ui'
@@ -126,6 +134,17 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
   const attention = data.upcoming.filter((e) => needsAttention(daysBetween(data.today, e.exam_date), e.subject.difficulty))
   const hardest = [...data.subjects].sort((a, b) => b.difficulty - a.difficulty || a.name.localeCompare(b.name, 'es'))
   const nextWeekCount = data.upcoming.filter((e) => daysBetween(data.today, e.exam_date) <= 7).length
+  const rules = settings ?? { offsets: DEFAULT_OFFSETS, hard_extra_days: DEFAULT_HARD_EXTRA_DAYS }
+  const examsToday = data.upcoming.filter((e) => e.exam_date === data.today)
+  // Una fila por asignatura (su examen más cercano), lo más urgente primero.
+  const studyToday = [
+    ...new Map(
+      data.upcoming
+        .filter((e) => shouldStudyToday(daysBetween(data.today, e.exam_date), e.subject.difficulty, rules))
+        .reverse()
+        .map((e) => [e.subject.id, e]),
+    ).values(),
+  ].sort((a, b) => a.exam_date.localeCompare(b.exam_date) || b.subject.difficulty - a.subject.difficulty)
 
   return (
     <div className="space-y-4">
@@ -142,6 +161,47 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
       {settings?.enabled && deviceCount === 0 && (
         <Alert tone="info">aún no has activado las notificaciones en tu móvil: pestaña [avisos] → «activar notificaciones aquí».</Alert>
       )}
+
+      <section className="border-2 border-ink p-2">
+        <Heading>hoy debe estudiar</Heading>
+        {studyToday.length ? (
+          <ul className="space-y-1">
+            {studyToday.map((exam) => {
+              const daysLeft = daysBetween(data.today, exam.exam_date)
+              return (
+                <li key={exam.subject.id} className="flex items-center gap-2 px-1 py-1">
+                  <SubjectDot subject={exam.subject} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-lg font-bold">{exam.subject.name}</span>
+                    <span className="block text-muted">
+                      examen {formatDate(exam.exam_date)}
+                      {exam.exam_time && ` · ${formatTime(exam.exam_time)}`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className={`block ${daysLeft <= 3 ? 'font-bold text-red-700' : ''}`}>
+                      {relativeDays(daysLeft).toLowerCase()}
+                    </span>
+                    <DifficultyBadge difficulty={exam.subject.difficulty} />
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="text-muted">hoy no tiene que estudiar nada concreto.</p>
+        )}
+        {examsToday.length > 0 && (
+          <p className="mt-2 border-t border-dashed border-line pt-1">
+            <span className="font-bold">hoy tiene examen de:</span>{' '}
+            {examsToday.map((e) => e.subject.name + (e.exam_time ? ` (${formatTime(e.exam_time)})` : '')).join(', ')}
+          </p>
+        )}
+        <p className="mt-1 text-xs text-muted">
+          asignaturas con examen dentro de los plazos de aviso ({offsetsForExam(1, rules)[0] ?? 0} días, o{' '}
+          {offsetsForExam(5, rules)[0] ?? 0} si es difícil).
+        </p>
+      </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section>

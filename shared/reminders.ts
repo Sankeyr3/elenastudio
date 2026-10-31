@@ -91,6 +91,15 @@ export function needsAttention(daysLeft: number, difficulty: number): boolean {
   return daysLeft >= 0 && (daysLeft <= 3 || (isHard(difficulty) && daysLeft <= 14))
 }
 
+/**
+ * ¿Debe estudiar hoy para este examen? Sí mientras esté dentro de la ventana de avisos
+ * (desde el primer plazo hasta la víspera). El día del examen ya no cuenta como estudio.
+ */
+export function shouldStudyToday(daysLeft: number, difficulty: number, rules: ReminderRules): boolean {
+  const offsets = offsetsForExam(difficulty, rules)
+  return offsets.length > 0 && daysLeft >= 1 && daysLeft <= offsets[0]
+}
+
 export function validateRules(rules: ReminderRules): string | null {
   if (rules.offsets.length === 0) return 'Añade al menos un plazo.'
   if (rules.offsets.length > MAX_OFFSETS) return `Como máximo ${MAX_OFFSETS} plazos.`

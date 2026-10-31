@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { addDays, daysBetween, formatDate, isValidIsoDate, todayInMadrid } from '../shared/dates'
-import { dueOffset, needsAttention, nextReminder, offsetsForExam, validateRules } from '../shared/reminders'
+import { dueOffset, needsAttention, nextReminder, offsetsForExam, shouldStudyToday, validateRules } from '../shared/reminders'
 import { buildReminderNotification } from '../api/_lib/notification'
 import { planReminders, type ExamRow } from '../api/_lib/plan'
 
@@ -140,5 +140,19 @@ describe('planReminders + notificación', () => {
     const notification = buildReminderNotification({ studentName: 'Elena', reminders: [], appUrl: null, test: true })
     expect(notification.title).toBe('[Prueba] ElenaStudio')
     expect(notification.body).toContain('recordar a Elena')
+  })
+})
+
+describe('shouldStudyToday', () => {
+  const rules = { offsets: [14, 7, 3, 1], hard_extra_days: 7 }
+  it('cuenta desde el primer plazo hasta la víspera, no el día del examen', () => {
+    expect(shouldStudyToday(14, 3, rules)).toBe(true)
+    expect(shouldStudyToday(1, 3, rules)).toBe(true)
+    expect(shouldStudyToday(15, 3, rules)).toBe(false)
+    expect(shouldStudyToday(0, 3, rules)).toBe(false)
+  })
+  it('las difíciles empiezan antes', () => {
+    expect(shouldStudyToday(21, 4, rules)).toBe(true)
+    expect(shouldStudyToday(22, 4, rules)).toBe(false)
   })
 })
