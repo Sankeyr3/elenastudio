@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { daysBetween, formatDate, formatTime, relativeDays } from '../../../shared/dates'
+import { daysBetween, formatDate, formatTime, relativeDays, todayInMadrid } from '../../../shared/dates'
 import {
-  DEFAULT_HARD_EXTRA_DAYS,
-  DEFAULT_OFFSETS,
   needsAttention,
   nextReminder,
   offsetsForExam,
-  shouldStudyToday,
   type PlannedReminder,
 } from '../../../shared/reminders'
 import { ExamList } from '../../components/ExamList'
@@ -134,17 +131,20 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
   const attention = data.upcoming.filter((e) => needsAttention(daysBetween(data.today, e.exam_date), e.subject.difficulty))
   const hardest = [...data.subjects].sort((a, b) => b.difficulty - a.difficulty || a.name.localeCompare(b.name, 'es'))
   const nextWeekCount = data.upcoming.filter((e) => daysBetween(data.today, e.exam_date) <= 7).length
-  const rules = settings ?? { offsets: DEFAULT_OFFSETS, hard_extra_days: DEFAULT_HARD_EXTRA_DAYS }
   const examsToday = data.upcoming.filter((e) => e.exam_date === data.today)
-  // Una fila por asignatura (su examen más cercano), lo más urgente primero.
-  const studyToday = [
-    ...new Map(
-      data.upcoming
-        .filter((e) => shouldStudyToday(daysBetween(data.today, e.exam_date), e.subject.difficulty, rules))
-        .reverse()
-        .map((e) => [e.subject.id, e]),
-    ).values(),
-  ].sort((a, b) => a.exam_date.localeCompare(b.exam_date) || b.subject.difficulty - a.subject.difficulty)
+  // Lo mismo que lleva (o llevará esta tarde) el aviso de hoy: lo ya enviado hoy + lo que toca y aún no se ha enviado.
+  const sentTodayIds = new Set(
+    logs
+      .filter((l) => l.exam_id && l.status !== 'failed' && todayInMadrid(new Date(l.created_at)) === data.today)
+      .map((l) => `${l.exam_id}:${l.exam_date}`),
+  )
+  const studyToday = data.upcoming
+    .filter(
+      (e) =>
+        sentTodayIds.has(`${e.id}:${e.exam_date}`) ||
+        (settings?.enabled === true && planned.some((p) => p.exam.id === e.id && p.reminder.dueNow)),
+    )
+    .sort((a, b) => a.exam_date.localeCompare(b.exam_date) || b.subject.difficulty - a.subject.difficulty)
 
   return (
     <div className="space-y-4">
@@ -169,7 +169,7 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
             {studyToday.map((exam) => {
               const daysLeft = daysBetween(data.today, exam.exam_date)
               return (
-                <li key={exam.subject.id} className="flex items-center gap-2 px-1 py-1">
+                <li key={exam.id} className="flex items-center gap-2 px-1 py-1">
                   <SubjectDot subject={exam.subject} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-lg font-bold">{exam.subject.name}</span>
@@ -197,10 +197,7 @@ function HelperDashboard({ helperId, student, tab }: { helperId: string; student
             {examsToday.map((e) => e.subject.name + (e.exam_time ? ` (${formatTime(e.exam_time)})` : '')).join(', ')}
           </p>
         )}
-        <p className="mt-1 text-xs text-muted">
-          asignaturas con examen dentro de los plazos de aviso ({offsetsForExam(1, rules)[0] ?? 0} días, o{' '}
-          {offsetsForExam(5, rules)[0] ?? 0} si es difícil).
-        </p>
+        <p className="mt-1 text-xs text-muted">las mismas asignaturas que el aviso de hoy.</p>
       </section>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
